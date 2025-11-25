@@ -21,10 +21,10 @@ struct pollfd {
 
 ## Event functions
 
-`POLLIN` - There are data to read
-`POLLOUT` - Can write without block
-`POLLERR` - Error
-`POLLHUP` - Client close connections
+- `POLLIN` There are data to read
+- `POLLOUT` Can write without block
+- `POLLERR` Error
+- `POLLHUP` Client close connections
 
 ## How it works
 
@@ -49,3 +49,17 @@ if (fds[0].revents & POLLHUP)
 ```
 
 TCP_SOCKET only needs POLLIN() because it watches all incoming connections
+
+## Useful commands for testing
+
+- Sequence of 5 connections
+
+```bash
+for i in 1 2 3 4 5; do curl http://127.0.0.1:8080 && echo " - Request $i done"; done
+```
+
+- Parallelism of 3 connections at same time
+
+```bash
+curl http://127.0.0.1:8080 & curl http://127.0.0.1:8080 & curl http://127.0.0.1:8080 &
+```

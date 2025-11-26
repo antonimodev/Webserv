@@ -29,9 +29,10 @@ struct pollfd {
 ## How it works
 
 ```cpp
-struct pollfd fds[1];
-fds[0].fd = agent;
-fds[0].events = POLLIN | POLLOUT;  // Both events
+struct pollfd fds;
+fds.fd = agent;
+fds.events = POLLIN | POLLOUT;  // Both events
+fds.revents = 0;
 
 int ret = poll(fds, 1, 5000);
 

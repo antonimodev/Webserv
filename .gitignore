@@ -1,3 +1,7 @@
 # FILES
 .vscode
+obj
+
+# EXECUTABLE
 a.out
+webserv

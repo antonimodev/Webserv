@@ -1,17 +1,10 @@
-#include <sys/socket.h> // socket()
-#include <netinet/in.h> // struct sockaddr_in
-#include <arpa/inet.h> // inet_addr()
-
 #include <poll.h> // poll()
-
-#include <unistd.h> // close()
 #include <sstream> // std::ostringstream
-#include <iostream> // std::containers()
-
-#include <fcntl.h> // setsockopt()
 
 #include <vector>
 #include <map>
+
+#include "webserv.h"
 
 struct ClientState {
 	std::string request_buffer;  // Stores the incoming request piece by piece
@@ -20,11 +13,6 @@ struct ClientState {
 
 	ClientState() : response_ready(false) {}
 };
-
-void	set_nonblocking(int fd) {
-	if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1)
-		std::cerr << "fcntl failed" << std::endl;
-}
 
 pollfd	create_struct_pollfd(int fd_socket, short event) {
 	pollfd pollfd;
@@ -37,36 +25,7 @@ pollfd	create_struct_pollfd(int fd_socket, short event) {
 }
 
 int main(void) {
-	int tcp_socket = socket(AF_INET, SOCK_STREAM, 0);
-	if (tcp_socket == -1)
-		std::cerr << "tcp_socket failed to create" << std::endl;
-
-	set_nonblocking(tcp_socket);
-	std::cout << "TCP Socket is: " << tcp_socket << std::endl;
-
-	int opt = 1;
-	if (setsockopt(tcp_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1) {
-		std::cerr << "setsockopt failed" << std::endl;
-		close(tcp_socket);
-		return 1;
-	}
-
-	sockaddr_in address;
-	address.sin_family = AF_INET;
-	address.sin_port = htons(8080);
-	address.sin_addr.s_addr = inet_addr("127.0.0.1");
-
-	// bind() to bind the socket to IP/Port
-	if (bind(tcp_socket, (const sockaddr *)&address, sizeof(address)) == -1) {
-		std::cerr << "tcp_socket can't bind" << std::endl;
-		close(tcp_socket);
-	}
-
-	// listen() to listen for connections
-	if (listen(tcp_socket, 5) == -1) {
-		std::cerr << "connection refused" << std::endl;
-		close(tcp_socket);
-	}
+	int tcp_socket = init_server_socket();
 
 	std::vector<struct pollfd> poll_vector;
 	std::map<int, ClientState> client_map;
@@ -92,13 +51,14 @@ int main(void) {
 		for (size_t i = 0; i < poll_vector.size(); ++i) {
 			// Case 1: The Listening Socket (New Connection)
 			if (poll_vector[i].fd == tcp_socket && (poll_vector[i].revents & POLLIN)) {
+				sockaddr_in address;
 				socklen_t socklen = sizeof(address);
 				int agent = accept(tcp_socket, (sockaddr *)&address, &socklen);
 				if (agent == -1) {
 					std::cerr << "agent -1" << std::endl;
 					continue;
 				}
-				set_nonblocking(agent);
+				set_nonblocking(&agent);
 				
 				if (agent >= 0) {
 					// 1. Add new socket to poll vector

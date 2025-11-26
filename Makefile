@@ -1,10 +1,12 @@
 NAME = webserv
 COMPILER = c++
-FLAGS = -Wall -Wextra -Werror -std=c++98 -MMD
+INCLUDE = -IWebserv
+FLAGS = -Wall -Wextra -Werror -std=c++98 -MMD $(INCLUDE)
 OBJ = $(addprefix obj/, $(SRCS:.cpp=.o))
 DEPENDENCIES = $(OBJ:.o=.d)
 
-SRCS = main.cpp
+SRCS = 	main.cpp \
+		Webserv/Webserv.cpp
 
 all: $(NAME)
 
@@ -13,7 +15,7 @@ $(NAME): $(OBJ)
 	@echo "✅ $(NAME) has been compiled!"
 
 obj/%.o: %.cpp
-	@mkdir -p obj
+	@mkdir -p $(dir $@)
 	@$(COMPILER) $(FLAGS) -c $< -o $@
 
 clean:

@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "SocketException.hpp"
+#include "PollException.hpp"
 #include "Webserv.hpp"
 #include "webserv.h"
 
@@ -9,6 +10,9 @@ int main(void) {
 		Webserv webserv;
 		webserv.runServer();
 	} catch ( const SocketException& e ) {
+		std::cerr << e.what() << std::endl;
+		return 1;
+	} catch ( const PollException& e ) {
 		std::cerr << e.what() << std::endl;
 		return 1;
 	}

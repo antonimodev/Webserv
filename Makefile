@@ -7,6 +7,7 @@ DEPENDENCIES = $(OBJ:.o=.d)
 
 SRCS = 	main.cpp \
 		socket.cpp \
+		parser.cpp \
 		Webserv/Webserv.cpp
 
 all: $(NAME)

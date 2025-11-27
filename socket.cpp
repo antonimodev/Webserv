@@ -13,7 +13,7 @@ int create_socket(int domain, int type, int protocol) {
 	int socket_fd = socket(domain, type, protocol);
 
 	if (socket_fd == -1)
-		throw SocketException("Error: socket failed to create");
+		throw SocketException("Error: socket() failed to create");
 
 	return socket_fd;
 }
@@ -22,7 +22,7 @@ int create_socket(int domain, int type, int protocol) {
 void	set_nonblocking(int& socket_fd) {
 	if (fcntl(socket_fd, F_SETFL, O_NONBLOCK) == -1) {
 		close(socket_fd);
-		throw SocketException("Error: fcntl failed to set non-blocking mode");
+		throw SocketException("Error: fcntl() failed to set non-blocking mode");
 	}
 }
 
@@ -32,7 +32,7 @@ void	set_socket_mode(int& socket_fd, int mode) {
 
 	if (setsockopt(socket_fd, SOL_SOCKET, mode, &opt, sizeof(opt)) == -1) {
 		close(socket_fd);
-		throw SocketException("Error: setsockopt failed");
+		throw SocketException("Error: setsockopt() failed");
 	}
 }
 
@@ -45,7 +45,7 @@ void	bind_socket(int& socket_fd, const char* ip, int port, int domain) {
 
 	if (bind(socket_fd, (const sockaddr *)&address, sizeof(address)) == -1) {
 		close(socket_fd);
-		throw SocketException("Error: bind failed");
+		throw SocketException("Error: bind() failed");
 	}
 }
 
@@ -53,7 +53,7 @@ void	bind_socket(int& socket_fd, const char* ip, int port, int domain) {
 void	listen_socket(int& socket_fd, int backlog) {
 	if (listen(socket_fd, backlog) == -1) {
 		close(socket_fd);
-		throw SocketException("Error: listen failed");
+		throw SocketException("Error: listen() failed");
 	}
 }
 

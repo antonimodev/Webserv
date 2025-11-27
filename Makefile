@@ -1,6 +1,6 @@
 NAME = webserv
 COMPILER = c++
-INCLUDE = -IWebserv -IExceptions
+INCLUDE = -I. -IWebserv -IExceptions
 FLAGS = -Wall -Wextra -Werror -std=c++98 -MMD $(INCLUDE)
 OBJ = $(addprefix obj/, $(SRCS:.cpp=.o))
 DEPENDENCIES = $(OBJ:.o=.d)

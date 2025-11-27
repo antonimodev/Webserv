@@ -10,14 +10,17 @@
 //
 #include <sstream> // std::ostringstream
 
+#include <ctime> // time_t
+
 #include "webserv.h"
 
 struct ClientState {
 	std::string request_buffer;  // Stores the incoming request piece by piece
 	std::string response_buffer; // Stores the final response to be sent
 	bool        response_ready;  // Flag: true when we have finished processing and are ready to send
+	time_t		last_active;
 
-	ClientState() : response_ready(false) {}
+	ClientState() : response_ready(false), last_active(time(NULL)) {}
 };
 
 class Webserv {
@@ -32,6 +35,8 @@ class Webserv {
 		void	handleNewConnection(void);
 		void	handleReceiveEvent(size_t& idx);
 		void	handleSendEvent(size_t& idx);
+		void	checkTimeout(void);
+		void	resetClientInfo(int& socket_fd);
 
 	public:
 		Webserv(void);

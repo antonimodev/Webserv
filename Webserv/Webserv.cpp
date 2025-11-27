@@ -17,10 +17,10 @@ Webserv::Webserv(void) : _tcp_socket(init_server_socket()) {}
 Webserv::~Webserv(void) {}
 
 // PRIVATE
-pollfd	Webserv::create_struct_pollfd(int& fd_socket, short event) {
+pollfd	Webserv::create_struct_pollfd(int& socket_fd, short event) {
 	pollfd pollfd;
 
-	pollfd.fd = fd_socket;
+	pollfd.fd = socket_fd;
 	pollfd.events = event;
 	pollfd.revents = 0;
 
@@ -36,11 +36,34 @@ void	Webserv::watchPollEvents() {
 		throw PollException("Error: poll() failed");
 
 	if (result == 0)
-		throw PollException("Error: poll() timeout");
+		// throw PollException("Error: poll() timeout");
+		std::cout << "State: poll() timeout" << std::endl;
 }
 
 void	Webserv::addPollEvent(int& sock_fd, short event) {
 	_poll_vector.push_back(create_struct_pollfd(sock_fd, event));
+}
+
+void	Webserv::checkTimeout(void) {
+	time_t current_time = time(NULL);
+
+	for (size_t i = 1; i < _poll_vector.size(); ++i) {
+		int client_fd = _poll_vector[i].fd;
+
+		if ((current_time - _client_map[client_fd].last_active) > 30) {
+			close(client_fd);
+			_client_map.erase(client_fd);
+			_poll_vector.erase(_poll_vector.begin() + i);
+			--i;
+			std::cout << "Client " << client_fd << " has been disconnected due inactivity" << std::endl;
+		}
+	}
+}
+
+void	Webserv::resetClientInfo(int& socket_fd) {
+	_client_map[socket_fd].response_ready = false;
+	_client_map[socket_fd].request_buffer.clear();
+	_client_map[socket_fd].response_buffer.clear();
 }
 
 void	Webserv::handleNewConnection() {
@@ -74,6 +97,7 @@ void	Webserv::handleReceiveEvent(size_t& idx) {
 		--idx;
 		std::cout << "Client disconnected" << std::endl;
 	} else {
+		_client_map[client_fd].last_active = time(NULL);
 		buffer[bytes_read] = '\0';
 		_client_map[client_fd].request_buffer += buffer;
 
@@ -103,16 +127,11 @@ void	Webserv::handleSendEvent(size_t& idx) {
 		std::string& response = _client_map[client_fd].response_buffer;
 		
 		ssize_t bytes_sent = send(client_fd, response.c_str(), response.size(), 0);
-		
+
 		if (bytes_sent >= 0) {
-			// For simplicity: assume full send. In real webserv, handle partial sends.
-			std::cout << "Response sent to " << client_fd << std::endl;
-			
-			// Close connection (HTTP 1.0 style)
-			close(client_fd);
-			_client_map.erase(client_fd);
-			_poll_vector.erase(_poll_vector.begin() + idx);
-			--idx;
+			resetClientInfo(client_fd);
+			_client_map[client_fd].last_active = time(NULL);
+			_poll_vector[idx].events = POLLIN;
 		}
 	}
 }
@@ -127,6 +146,7 @@ void	Webserv::runServer(void) {
 			std::cerr << e.what() << std::endl;
 			continue;
 		}
+		checkTimeout();
 		// Iterate through all sockets
 		for (size_t i = 0; i < _poll_vector.size(); ++i) {
 			if (_poll_vector[i].fd == _tcp_socket && (_poll_vector[i].revents & POLLIN))
@@ -135,7 +155,7 @@ void	Webserv::runServer(void) {
 				handleReceiveEvent(i);
 			else if (_poll_vector[i].revents & POLLOUT)
 				handleSendEvent(i);
+		}
 	}
 	close(_tcp_socket);
-	}
 }

@@ -9,8 +9,10 @@
 #include <unistd.h>
 
 #include "Webserv.hpp"
+#include "Parser.hpp"
 #include "SocketException.hpp"
 #include "PollException.hpp"
+#include "ParseException.hpp"
 
 Webserv::Webserv(void) : _tcp_socket(init_server_socket()) {}
 
@@ -61,9 +63,9 @@ void	Webserv::checkTimeout(void) {
 }
 
 void	Webserv::resetClientInfo(int& socket_fd) {
-	_client_map[socket_fd].response_ready = false;
 	_client_map[socket_fd].request_buffer.clear();
 	_client_map[socket_fd].response_buffer.clear();
+	_client_map[socket_fd].response_ready = false;
 }
 
 void	Webserv::handleNewConnection() {
@@ -102,6 +104,15 @@ void	Webserv::handleReceiveEvent(size_t& idx) {
 		_client_map[client_fd].request_buffer += buffer;
 
 		if (_client_map[client_fd].request_buffer.find("\r\n\r\n") != std::string::npos) {
+			try {
+				_client_map[client_fd].http_request = Parser::parseHttpRequest(_client_map[client_fd].request_buffer);
+			} catch (const ParseException& e) {
+				std::cerr << e.what() << std::endl;
+				_client_map[client_fd].response_buffer = // lo que devuelve la funcion que monta msg
+			}
+
+
+
 			// Prepare the response (store it in the map, don't send yet!)
 			std::string msg = "<h1>Hello from Webserv</h1>";
 			std::ostringstream oss;

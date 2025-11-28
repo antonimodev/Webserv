@@ -18,16 +18,19 @@ struct ClientState {
 	std::string request_buffer;  // Stores the incoming request piece by piece
 	std::string response_buffer; // Stores the final response to be sent
 	bool        response_ready;  // Flag: true when we have finished processing and are ready to send
+
 	time_t		last_active;
+
+	HttpRequest	http_request;
 
 	ClientState() : response_ready(false), last_active(time(NULL)) {}
 };
 
 class Webserv {
 	private:
+		int							_tcp_socket;
 		std::vector<struct pollfd>	_poll_vector;
 		std::map<int, ClientState>	_client_map;
-		int							_tcp_socket;
 
 		pollfd	create_struct_pollfd(int& fd_socket, short event);
 		void	watchPollEvents();

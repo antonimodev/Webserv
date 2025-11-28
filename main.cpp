@@ -14,8 +14,5 @@ int main(void) {
 	} catch ( const SocketException& e ) {
 		std::cerr << e.what() << std::endl;
 		return 1;
-	} catch ( const ParseException& e ) {
-		std::cerr << e.what() << std::endl;
-		return 1;
 	}
 }

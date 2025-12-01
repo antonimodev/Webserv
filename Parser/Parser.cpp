@@ -3,6 +3,7 @@
 #include <unistd.h>
 
 #include "ParseException.hpp"
+#include "HttpCodeException.hpp"
 #include "Parser.hpp"
 
 // CONSTRUCTORS
@@ -14,7 +15,7 @@ Parser::~Parser(void) {}
 // PRIVATE FUNCTIONS
 void	Parser::validMethod(const std::string& method) {
 	if (method != "GET" && method != "POST" && method != "DELETE")
-		throw ParseException(BAD_REQUEST);
+		throw HttpCodeException(BAD_REQUEST);
 }
 
 void	Parser::validRoute(const std::string& route) {
@@ -35,16 +36,18 @@ void	Parser::validVersion(const std::string& version) {
 		throw ParseException("Error: " + version + " not valid");
 }
 
+
 void	Parser::validHttpRequest(const std::string& request, HttpRequest& httpStruct) {
 	std::stringstream iss(request);
 
 	if (!(iss >> httpStruct.method >> httpStruct.route >> httpStruct.version))
 		throw ParseException("Error: malformed request line");
-	
-	std::string check_extra;
+
+	// Probably we'll have to check only first line
+/* 	std::string check_extra;
 
 	if (iss >> check_extra)
-		throw ParseException("Error: unexpected content after HTTP version");
+		throw ParseException("Error: unexpected content after HTTP version"); */
 
 	validMethod(httpStruct.method);
 	validRoute(httpStruct.route);
@@ -58,38 +61,3 @@ HttpRequest    Parser::parseHttpRequest(const std::string& request) {
 	validHttpRequest(request, httpStruct);
 	return httpStruct;
 }
-
-
-
-
-
-/* void	Parser::parseRequestLine(const std::string& line, HttpRequest& req) {
-	std::istringstream iss(line);
-	std::string extra;
-
-	if (!(iss >> req.method >> req.route >> req.version))
-		throw ParseException("Error: malformed request line");
-
-	if (iss >> extra)
-		throw ParseException("Error: unexpected content after HTTP version");
-}
-
-void	Parser::validateRequest(const HttpRequest& req) {
-	validMethod(req.method);
-	validRoute(req.route);
-	validVersion(req.version);
-}
-
-// PUBLIC FUNCTIONS
-HttpRequest	Parser::parseHttpRequest(const std::string& request) {
-	HttpRequest req;
-
-	std::istringstream iss(request);
-	std::string request_line;
-	std::getline(iss, request_line);
-
-	parseRequestLine(request_line, req);
-	validateRequest(req);
-
-	return req;
-} */

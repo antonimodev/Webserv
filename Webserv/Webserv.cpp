@@ -89,6 +89,7 @@ void	Webserv::handleNewConnection() {
 // Modularize in the future
 void	Webserv::handleReceiveEvent(size_t& idx) {
 	int client_fd = _poll_vector[idx].fd;
+
 	char buffer[1024];
 	ssize_t bytes_read = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
 
@@ -102,30 +103,23 @@ void	Webserv::handleReceiveEvent(size_t& idx) {
 		_client_map[client_fd].last_active = time(NULL);
 		buffer[bytes_read] = '\0';
 		_client_map[client_fd].request_buffer += buffer;
-
 		if (_client_map[client_fd].request_buffer.find("\r\n\r\n") != std::string::npos) {
 			try {
 				_client_map[client_fd].http_request = Parser::parseHttpRequest(_client_map[client_fd].request_buffer);
+
+				std::string msg = "<h1>Hello from Webserv</h1>";
+				std::ostringstream oss;
+				oss << msg.size();
+
+				_client_map[client_fd].response_buffer =
+					"HTTP/1.1 200 OK\r\n"
+					"Content-Type: text/html\r\n"
+					"Content-Length: " + oss.str() + "\r\n"
+					"\r\n" + msg;
 			} catch (const ParseException& e) {
-				std::cerr << e.what() << std::endl;
-				_client_map[client_fd].response_buffer = // lo que devuelve la funcion que monta msg
+				_client_map[client_fd].response_buffer = e.httpResponse();
 			}
-
-
-
-			// Prepare the response (store it in the map, don't send yet!)
-			std::string msg = "<h1>Hello from Webserv</h1>";
-			std::ostringstream oss;
-			oss << msg.size();
-
-			_client_map[client_fd].response_buffer =
-				"HTTP/1.1 200 OK\r\n"
-				"Content-Type: text/html\r\n"
-				"Content-Length: " + oss.str() + "\r\n"
-				"\r\n" + msg;
-
 			_client_map[client_fd].response_ready = true;
-
 			_poll_vector[idx].events = POLLOUT;
 		}
 	}

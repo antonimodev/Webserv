@@ -14,7 +14,7 @@ Parser::~Parser(void) {}
 // PRIVATE FUNCTIONS
 void	Parser::validMethod(const std::string& method) {
 	if (method != "GET" && method != "POST" && method != "DELETE")
-		throw ParseException("Error: " + method + " is not a valid method");
+		throw ParseException(BAD_REQUEST);
 }
 
 void	Parser::validRoute(const std::string& route) {
@@ -58,11 +58,6 @@ HttpRequest    Parser::parseHttpRequest(const std::string& request) {
 	validHttpRequest(request, httpStruct);
 	return httpStruct;
 }
-
-
-
-
-
 
 
 

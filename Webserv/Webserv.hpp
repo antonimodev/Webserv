@@ -13,6 +13,7 @@
 #include <ctime> // time_t
 
 #include "webserv.h"
+#include "Parser.hpp"
 
 struct ClientState {
 	std::string request_buffer;  // Stores the incoming request piece by piece

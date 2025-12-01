@@ -11,10 +11,10 @@ struct HttpRequest {
 
 class Parser {
     private:
-        void    validMethod(const std::string& method);
-        void    validRoute(const std::string& method);
-        void    validVersion(const std::string& method);
-        void    validHttpRequest(const std::string& request, HttpRequest& httpStruct);
+        static void    validMethod(const std::string& method);
+        static void    validRoute(const std::string& method);
+        static void    validVersion(const std::string& method);
+        static void    validHttpRequest(const std::string& request, HttpRequest& httpStruct);
 
     public:
         Parser(void);

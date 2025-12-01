@@ -8,7 +8,8 @@ DEPENDENCIES = $(OBJ:.o=.d)
 SRCS = 	main.cpp \
 		socket.cpp \
 		Parser/Parser.cpp \
-		Webserv/Webserv.cpp
+		Webserv/Webserv.cpp \
+		Exceptions/ParseException.cpp
 
 all: $(NAME)
 

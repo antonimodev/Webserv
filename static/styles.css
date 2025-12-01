@@ -1,0 +1,32 @@
+* {
+	user-select: none;
+}
+
+body {
+	background-color: rgb(42, 42, 42);
+
+	height: 100vh;
+	margin: 0;
+	padding: 0;
+	font-family: Verdana, Geneva, Tahoma, sans-serif;
+
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+}
+
+small {
+	color: whitesmoke;
+}
+
+h1 {
+	color: rgb(228, 182, 65);
+	transition: all 0.5s ease;
+	font-size: 5vw;
+	margin-top: 0;
+
+	&:hover {
+		transform: scale(1.2);
+	}
+}

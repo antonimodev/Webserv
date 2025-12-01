@@ -13,6 +13,7 @@
 #include "SocketException.hpp"
 #include "PollException.hpp"
 #include "ParseException.hpp"
+#include "HttpCodeException.hpp"
 
 Webserv::Webserv(void) : _tcp_socket(init_server_socket()) {}
 
@@ -116,8 +117,11 @@ void	Webserv::handleReceiveEvent(size_t& idx) {
 					"Content-Type: text/html\r\n"
 					"Content-Length: " + oss.str() + "\r\n"
 					"\r\n" + msg;
+			} catch (const HttpCodeException& e) {
+				_client_map[client_fd].response_buffer = e.what();
 			} catch (const ParseException& e) {
-				_client_map[client_fd].response_buffer = e.httpResponse();
+				std::cerr << e.what() << std::endl;
+				return;
 			}
 			_client_map[client_fd].response_ready = true;
 			_poll_vector[idx].events = POLLOUT;

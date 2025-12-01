@@ -2,7 +2,6 @@
 #include <sstream>
 #include <unistd.h>
 
-#include "ParseException.hpp"
 #include "HttpCodeException.hpp"
 #include "Parser.hpp"
 
@@ -15,25 +14,25 @@ Parser::~Parser(void) {}
 // PRIVATE FUNCTIONS
 void	Parser::validMethod(const std::string& method) {
 	if (method != "GET" && method != "POST" && method != "DELETE")
-		throw HttpCodeException(BAD_REQUEST);
+		throw HttpCodeException(BAD_REQUEST, "Error: " + method + " is not a valid method");
 }
 
 void	Parser::validRoute(const std::string& route) {
 	if (route[0] != '/')
-		throw ParseException("Error: route must start with '/'");
+		throw HttpCodeException(BAD_REQUEST, "Error: route must start with '/'");
 	
 	if (route.find("..") != std::string::npos)
-		throw ParseException("Error: path traversal not allowed");
+		throw HttpCodeException(BAD_REQUEST, "Error: path traversal not allowed");
 
 	for (size_t i = 0; i < route.size(); ++i) {
 		if (!std::isgraph(route[i]))
-			throw ParseException("Error: invalid character in route");
+			throw HttpCodeException(BAD_REQUEST, "Error: invalid character in route");
 	}
 }
 
 void	Parser::validVersion(const std::string& version) {
 	if (version != "HTTP/1.1")
-		throw ParseException("Error: " + version + " not valid");
+		throw HttpCodeException(BAD_REQUEST, "Error: " + version + " not valid");
 }
 
 
@@ -41,13 +40,13 @@ void	Parser::validHttpRequest(const std::string& request, HttpRequest& httpStruc
 	std::stringstream iss(request);
 
 	if (!(iss >> httpStruct.method >> httpStruct.route >> httpStruct.version))
-		throw ParseException("Error: malformed request line");
+		throw HttpCodeException(BAD_REQUEST, "Error: malformed request line");
 
 	// Probably we'll have to check only first line
 /* 	std::string check_extra;
 
 	if (iss >> check_extra)
-		throw ParseException("Error: unexpected content after HTTP version"); */
+		throw HttpCodeException("Error: unexpected content after HTTP version"); */
 
 	validMethod(httpStruct.method);
 	validRoute(httpStruct.route);
@@ -56,6 +55,7 @@ void	Parser::validHttpRequest(const std::string& request, HttpRequest& httpStruc
 
 // extract HttpRequest
 HttpRequest    Parser::parseHttpRequest(const std::string& request) {
+	//throw HttpCodeException(BAD_REQUEST, "For testing purposes"); // test
 	HttpRequest httpStruct;
 
 	validHttpRequest(request, httpStruct);

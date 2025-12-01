@@ -1,6 +1,5 @@
 #include <iostream>
 
-#include "ParseException.hpp"
 #include "SocketException.hpp"
 #include "PollException.hpp"
 

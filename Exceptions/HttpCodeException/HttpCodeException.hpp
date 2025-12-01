@@ -12,7 +12,10 @@ enum HttpStatus {
 class HttpCodeException : public std::runtime_error {
 	private:
 		const char*	statusToString(const HttpStatus& status) const;
+		HttpStatus			_status;
 
 	public:
-		HttpCodeException(const HttpStatus& code);
+		HttpCodeException(const HttpStatus& code, const std::string& log_msg);
+
+		std::string			httpResponse(void) const;
 };

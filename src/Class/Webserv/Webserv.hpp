@@ -14,6 +14,8 @@
 
 #include "webserv.h"
 #include "Parser.hpp"
+#include "Socket.hpp"
+
 
 struct ClientState {
 	std::string request_buffer;  // Stores the incoming request piece by piece
@@ -27,24 +29,29 @@ struct ClientState {
 	ClientState() : response_ready(false), last_active(time(NULL)) {}
 };
 
+
 class Webserv {
 	private:
-		int							_tcp_socket;
+		std::vector<Socket*>		_server_sockets;	// Created as pointer to preserve class outside scope of his own creation
 		std::vector<struct pollfd>	_poll_vector;
 		std::map<int, ClientState>	_client_map;
 
-		pollfd	create_struct_pollfd(int& fd_socket, short event);
+		pollfd	create_struct_pollfd(int fd_socket, short event);
 		void	watchPollEvents();
-		void	addPollEvent(int& sock_fd, short event);
-		void	handleNewConnection(void);
+		void	addPollEvent(int sock_fd, short event);
+
+		void	handleNewConnection(int socket_fd);
 		void	handleReceiveEvent(size_t& idx);
 		void	handleSendEvent(size_t& idx);
+
 		void	checkTimeout(void);
-		void	resetClientInfo(int& socket_fd);
+		void	resetClientInfo(int socket_fd);
+		bool	isServerSocket(int fd) const;
 
 	public:
 		Webserv(void);
 		~Webserv(void);
 
 		void	runServer(void);
+		void	addSocket(const char* ip, int port);
 };

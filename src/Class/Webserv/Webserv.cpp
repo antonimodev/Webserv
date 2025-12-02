@@ -1,26 +1,29 @@
 #include <sys/socket.h>
-#include <arpa/inet.h>
+#include <netinet/in.h>
 
 #include <iostream>
-#include <sstream>
-
-#include <poll.h>
-
 #include <unistd.h>
 
 #include "Webserv.hpp"
-#include "Parser.hpp"
+#include "Socket.hpp"
 
-#include "SocketException.hpp"
 #include "PollException.hpp"
 #include "HttpCodeException.hpp"
 
-Webserv::Webserv(void) : _tcp_socket(init_server_socket()) {}
 
-Webserv::~Webserv(void) {}
+Webserv::Webserv(void) {}
+
+
+Webserv::~Webserv(void) {
+	for (size_t i = 0; i < _server_sockets.size(); ++i) {
+		delete _server_sockets[i];
+	}
+	_server_sockets.clear();
+}
+
 
 // PRIVATE
-pollfd	Webserv::create_struct_pollfd(int& socket_fd, short event) {
+pollfd	Webserv::create_struct_pollfd(int socket_fd, short event) {
 	pollfd pollfd;
 
 	pollfd.fd = socket_fd;
@@ -29,6 +32,7 @@ pollfd	Webserv::create_struct_pollfd(int& socket_fd, short event) {
 
 	return pollfd;
 }
+
 
 void	Webserv::watchPollEvents() {
 	int result;
@@ -43,9 +47,11 @@ void	Webserv::watchPollEvents() {
 		std::cout << "State: poll() timeout" << std::endl;
 }
 
-void	Webserv::addPollEvent(int& sock_fd, short event) {
+
+void	Webserv::addPollEvent(int sock_fd, short event) {
 	_poll_vector.push_back(create_struct_pollfd(sock_fd, event));
 }
+
 
 void	Webserv::checkTimeout(void) {
 	time_t current_time = time(NULL);
@@ -63,22 +69,40 @@ void	Webserv::checkTimeout(void) {
 	}
 }
 
-void	Webserv::resetClientInfo(int& socket_fd) {
+
+void	Webserv::resetClientInfo(int socket_fd) {
 	_client_map[socket_fd].request_buffer.clear();
 	_client_map[socket_fd].response_buffer.clear();
 	_client_map[socket_fd].response_ready = false;
 }
 
-void	Webserv::handleNewConnection() {
+
+bool	Webserv::isServerSocket(int fd) const {
+	for (size_t i = 0; i < _server_sockets.size(); ++i) {
+		if (_server_sockets[i]->getSocketFd() == fd)
+			return true;
+		}
+	return false;
+}
+
+
+void	Webserv::addSocket(const char* ip, int port) {
+	Socket* new_socket = new Socket(ip, port);
+
+	_server_sockets.push_back(new_socket);
+}
+
+
+void	Webserv::handleNewConnection(int socket_fd) {
 	sockaddr_in address;
 	socklen_t socklen = sizeof(address);
-	int agent = accept(_tcp_socket, (sockaddr *)&address, &socklen);
+	int agent = accept(socket_fd, (sockaddr *)&address, &socklen);
 
 	if (agent == -1) {
 		std::cerr << "agent -1" << std::endl;
 		return;
 	}
-	set_nonblocking(agent);
+	Socket::setNonBlocking(agent);
 	
 	if (agent >= 0) {
 		addPollEvent(agent, POLLIN);
@@ -86,6 +110,7 @@ void	Webserv::handleNewConnection() {
 		std::cout << "New client connected: " << agent << std::endl;
 	}
 }
+
 
 // Modularize in the future
 void	Webserv::handleReceiveEvent(size_t& idx) {
@@ -136,6 +161,7 @@ void	Webserv::handleReceiveEvent(size_t& idx) {
 	}
 }
 
+
 void	Webserv::handleSendEvent(size_t& idx) {
 	int client_fd = _poll_vector[idx].fd;
 
@@ -152,8 +178,10 @@ void	Webserv::handleSendEvent(size_t& idx) {
 	}
 }
 
+
 void	Webserv::runServer(void) {
-	addPollEvent(_tcp_socket, POLLIN);
+	for (size_t i = 0; i < _server_sockets.size(); ++i)
+		addPollEvent(_server_sockets[i]->getSocketFd(), POLLIN);
 
 	while (true) {
 		try {
@@ -162,16 +190,20 @@ void	Webserv::runServer(void) {
 			std::cerr << e.what() << std::endl;
 			continue;
 		}
+
 		checkTimeout();
-		// Iterate through all sockets
+
 		for (size_t i = 0; i < _poll_vector.size(); ++i) {
-			if (_poll_vector[i].fd == _tcp_socket && (_poll_vector[i].revents & POLLIN))
-				handleNewConnection();
-			else if (_poll_vector[i].revents & POLLIN)
-				handleReceiveEvent(i);
+			int fd = _poll_vector[i].fd;
+
+			if (_poll_vector[i].revents & POLLIN) {
+				if (isServerSocket(fd))
+					handleNewConnection(fd);
+				else
+					handleReceiveEvent(i);
+			}
 			else if (_poll_vector[i].revents & POLLOUT)
 				handleSendEvent(i);
 		}
 	}
-	close(_tcp_socket);
 }

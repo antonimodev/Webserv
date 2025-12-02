@@ -9,6 +9,7 @@ SRCS = 	main.cpp \
 		socket.cpp \
 		Parser/Parser.cpp \
 		Webserv/Webserv.cpp \
+		file_management.cpp \
 		Exceptions/HttpCodeException/HttpCodeException.cpp
 
 all: $(NAME)

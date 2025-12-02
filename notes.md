@@ -86,33 +86,67 @@ curl http://127.0.0.1:8080 & curl http://127.0.0.1:8080 & curl http://127.0.0.1:
 - 204 No Content: La solicitud fue exitosa, pero no hay contenido para devolver.
 
 
-## Códigos de estado HTTP 3xx
+## HTTP Status Codes 3xx
 
-3xx (Redirección)
+3xx (Redirection)
 
-- 301 Moved Permanently: El recurso se movió permanentemente a otra URL.
-- 302 Found: El recurso está temporalmente en otra URL.
-- 304 Not Modified: El recurso no ha sido modificado desde la última solicitud.
-
-
-## Códigos de estado HTTP 4xx
-
-4xx (Error del Cliente)
-
-- 400 Bad Request: La solicitud tiene un formato incorrecto.
-- 401 Unauthorized: Se requiere autenticación.
-- 403 Forbidden: El acceso al recurso está prohibido.
-- 404 Not Found: El recurso no se encontró.
-- 429 Too Many Requests: Se ha excedido el límite de solicitudes.
+- 301 Moved Permanently: The resource has been permanently moved to another URL.
+- 302 Found: The resource is temporarily at another URL.
+- 304 Not Modified: The resource has not been modified since the last request.
 
 
-## Códigos de estado HTTP 5xx
+## HTTP Status Codes 4xx
 
-5xx (Error del Servidor)
+4xx (Client Error)
 
-- 500 Internal Server Error: Error interno del servidor.
-- 502 Bad Gateway: El servidor recibió una respuesta inválida de un servidor superior.
-- 503 Service Unavailable: El servidor no puede manejar la solicitud temporalmente.
-- 504 Gateway Timeout: El servidor no recibió una respuesta a tiempo de un servidor superior.
+- 400 Bad Request: The request has an incorrect format.
+- 401 Unauthorized: Authentication is required.
+- 403 Forbidden: Access to the resource is forbidden.
+- 404 Not Found: The resource was not found.
+- 429 Too Many Requests: The request limit has been exceeded.
 
 
+## HTTP Status Codes 5xx
+
+5xx (Server Error)
+
+- 500 Internal Server Error: Internal server error.
+- 502 Bad Gateway: The server received an invalid response from an upstream server.
+- 503 Service Unavailable: The server cannot handle the request temporarily.
+- 504 Gateway Timeout: The server did not receive a timely response from an upstream server.
+
+
+## lvalue & rvalue
+
+- lvalue: expression with memory address that can be addressed and modified.
+
+- rvalue: temp value without memory address
+
+
+## Common basic MIME types
+
+### Text files:
+
+- text/html: HyperText Markup Language (HTML)
+- text/css: Cascading Style Sheets (CSS)
+- text/plain: Plain text files
+- text/javascript: JavaScript files
+
+### Image files:
+
+- image/jpeg: JPEG images
+- image/png: PNG images
+- image/gif: GIF images
+- image/svg+xml: Scalable Vector Graphics (SVG)
+
+### Application files:
+
+- application/json: JSON data
+- application/pdf: Portable Document Format (PDF)
+- application/zip: ZIP archives
+- application/octet-stream: A default for generic binary data
+
+### Audio and video files:
+
+- audio/mpeg: MP3 audio
+- video/mp4: MP4 video 

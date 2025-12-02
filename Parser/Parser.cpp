@@ -61,3 +61,15 @@ HttpRequest    Parser::parseHttpRequest(const std::string& request) {
 	validHttpRequest(request, httpStruct);
 	return httpStruct;
 }
+
+
+const std::string	get_mime_type(const std::string& extension) {
+    if (extension == "html") return "text/html";
+    if (extension == "css")  return "text/css";
+    if (extension == "png")  return "image/png";
+    if (extension == "jpg" || extension == "jpeg") return "image/jpeg";
+    if (extension == "ico")  return "image/x-icon";
+    if (extension == "txt")  return "text/plain";
+
+    return "text/html"; // default, check it for better understanding
+}

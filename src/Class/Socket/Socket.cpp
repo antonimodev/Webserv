@@ -8,7 +8,7 @@
 #include "Socket.hpp"
 
 
-Socket::Socket(const char* ip, int port) : _fd(-1) {
+Socket::Socket(const std::string& ip, int port) : _fd(-1) {
 	_fd = createSocket(AF_INET, SOCK_STREAM, 0);
 	setNonBlocking(_fd);
 	setSocketMode(_fd, SO_REUSEADDR);
@@ -39,9 +39,9 @@ void	Socket::setSocketMode(int socket_fd, int mode) {
 }
 
 
-void	Socket::bindSocket(int socket_fd, const char* ip, int port, int domain) {
+void	Socket::bindSocket(int socket_fd, const std::string& ip, int port, int domain) {
 	sockaddr_in address;
-	address.sin_addr.s_addr = inet_addr(ip);
+	address.sin_addr.s_addr = inet_addr(ip.c_str());
 	address.sin_port = htons(port);
 	address.sin_family = domain;
 	if (bind(socket_fd, (const sockaddr *)&address, sizeof(address)) == -1)

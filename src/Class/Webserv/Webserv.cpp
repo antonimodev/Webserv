@@ -15,9 +15,9 @@ Webserv::Webserv(void) {}
 
 
 Webserv::~Webserv(void) {
-	for (size_t i = 0; i < _server_sockets.size(); ++i) {
+	for (size_t i = 0; i < _server_sockets.size(); ++i)
 		delete _server_sockets[i];
-	}
+
 	_server_sockets.clear();
 }
 
@@ -112,52 +112,62 @@ void	Webserv::handleNewConnection(int socket_fd) {
 }
 
 
-// Modularize in the future
-void	Webserv::handleReceiveEvent(size_t& idx) {
+void	Webserv::disconnectClient(size_t& idx) {
 	int client_fd = _poll_vector[idx].fd;
 
+	close(client_fd);
+	_client_map.erase(client_fd);
+	_poll_vector.erase(_poll_vector.begin() + idx);
+	--idx;
+	std::cout << "Client disconnected" << std::endl;
+}
+
+void	Webserv::processClientRequest(size_t& idx) { 
+	int client_fd = _poll_vector[idx].fd;
+
+	try {
+		_client_map[client_fd].http_request = Parser::parseHttpRequest(_client_map[client_fd].request_buffer);
+
+		std::string route = _client_map[client_fd].http_request.route;
+		std::string extension = route.substr(route.rfind('.') + 1);
+		std::string content_type = get_mime_type(extension);
+
+		std::string msg;
+		if (route == "/")
+			msg = get_file_content("./static/index.html");
+		else
+			msg =get_file_content("./static" + route);
+
+		std::ostringstream oss;
+		oss << msg.size();
+		
+		_client_map[client_fd].response_buffer =
+			"HTTP/1.1 200 OK\r\n"
+			"Content-Type: " + content_type + "\r\n"
+			"Content-Length: " + oss.str() + "\r\n"
+			"\r\n" + msg;
+	} catch (const HttpCodeException& e) {
+		std::cerr << e.what() << std::endl;
+		_client_map[client_fd].response_buffer = e.httpResponse();
+	}
+}
+
+void	Webserv::handleReceiveEvent(size_t& idx) {
+	int client_fd = _poll_vector[idx].fd;
 	char buffer[1024];
 	ssize_t bytes_read = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
 
-	if (bytes_read <= 0) {
-		close(client_fd);
-		_client_map.erase(client_fd);
-		_poll_vector.erase(_poll_vector.begin() + idx);
-		--idx;
-		std::cout << "Client disconnected" << std::endl;
-	} else {
-		_client_map[client_fd].last_active = time(NULL);
-		buffer[bytes_read] = '\0';
-		_client_map[client_fd].request_buffer += buffer;
-		if (_client_map[client_fd].request_buffer.find("\r\n\r\n") != std::string::npos) {
-			try {
-				_client_map[client_fd].http_request = Parser::parseHttpRequest(_client_map[client_fd].request_buffer);
+	if (bytes_read <= 0)
+		return disconnectClient(idx);
 
-				std::string msg;
-				std::string route = _client_map[client_fd].http_request.route;
-				std::string	extension = (route.substr(route.rfind('.') + 1));
-				std::string content_type = get_mime_type(extension);
+	_client_map[client_fd].last_active = time(NULL);
+	buffer[bytes_read] = '\0';
+	_client_map[client_fd].request_buffer.append(buffer);
 
-				if (route == "/")
-					msg = get_file_content("./static/index.html");
-				else
-					msg = get_file_content("./static" + route);
-
-				std::ostringstream oss;
-				oss << msg.size();
-				
-				_client_map[client_fd].response_buffer =
-					"HTTP/1.1 200 OK\r\n"
-					"Content-Type: " + content_type + "\r\n"
-					"Content-Length: " + oss.str() + "\r\n"
-					"\r\n" + msg;
-			} catch (const HttpCodeException& e) {
-				std::cerr << e.what() << std::endl;
-				_client_map[client_fd].response_buffer = e.httpResponse();
-			}
-			_client_map[client_fd].response_ready = true;
-			_poll_vector[idx].events = POLLOUT;
-		}
+	if (_client_map[client_fd].request_buffer.find("\r\n\r\n") != std::string::npos) {
+		processClientRequest(idx);
+		_client_map[client_fd].response_ready = true;
+		_poll_vector[idx].events = POLLOUT;
 	}
 }
 

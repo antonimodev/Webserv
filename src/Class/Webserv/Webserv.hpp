@@ -48,6 +48,9 @@ class Webserv {
 		void	resetClientInfo(int socket_fd);
 		bool	isServerSocket(int fd) const;
 
+		void	disconnectClient(size_t& idx);
+		void	processClientRequest(size_t& idx);
+
 	public:
 		Webserv(void);
 		~Webserv(void);

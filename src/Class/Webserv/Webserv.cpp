@@ -4,6 +4,9 @@
 #include <iostream>
 #include <unistd.h>
 
+#include <sys/stat.h>
+
+#include "webserv.h"
 #include "Webserv.hpp"
 #include "Socket.hpp"
 
@@ -122,35 +125,70 @@ void	Webserv::disconnectClient(size_t& idx) {
 	std::cout << "Client disconnected" << std::endl;
 }
 
+// PROCESS CLIENT REQUEST
+
+std::string	load_resource(const std::string& full_path, const std::string& route, std::string& content_type) {
+	struct stat info;
+
+	if (stat(full_path.c_str(), &info) == -1)
+		throw HttpCodeException(NOT_FOUND, "Error: file " + route + " not found");
+
+	if (S_ISDIR(info.st_mode)) {
+		std::string index_path = full_path;
+		
+		// Ensure trailing slash for directory path concatenation
+		if (!full_path.empty() && full_path[full_path.size() - 1] != '/')
+			index_path += "/";
+		index_path += "index.html";
+
+		if (stat(index_path.c_str(), &info) == 0 && S_ISREG(info.st_mode)) {
+			content_type = get_mime_type("html");
+			return get_file_content(index_path);
+		}
+
+		// Autoindex: generate directory listing
+		// if autoindex TRUE
+		content_type = get_mime_type("html");
+		return webserv::get_directory_list(full_path, route);
+	}
+
+	if (S_ISREG(info.st_mode)) {
+		const std::string extension = get_extension(route);
+		content_type = get_mime_type(extension);
+		return get_file_content(full_path);
+	}
+
+	throw HttpCodeException(FORBIDDEN, "Error: cannot serve " + route);
+}
+
 void	Webserv::processClientRequest(size_t& idx) { 
-	int client_fd = _poll_vector[idx].fd;
+	const int client_fd = _poll_vector[idx].fd;
 
 	try {
 		_client_map[client_fd].http_request = Parser::parseHttpRequest(_client_map[client_fd].request_buffer);
 
-		std::string route = _client_map[client_fd].http_request.route;
-		std::string extension = route.substr(route.rfind('.') + 1);
-		std::string content_type = get_mime_type(extension);
+		const std::string& route = _client_map[client_fd].http_request.route;
+		const std::string  base_path = "./static";
+		const std::string  full_path = base_path + route;
 
-		std::string msg;
-		if (route == "/")
-			msg = get_file_content("./static/index.html");
-		else
-			msg =get_file_content("./static" + route);
+		std::string content_type;
+		const std::string msg = load_resource(full_path, route, content_type);
 
 		std::ostringstream oss;
 		oss << msg.size();
-		
+
 		_client_map[client_fd].response_buffer =
 			"HTTP/1.1 200 OK\r\n"
 			"Content-Type: " + content_type + "\r\n"
 			"Content-Length: " + oss.str() + "\r\n"
 			"\r\n" + msg;
+
 	} catch (const HttpCodeException& e) {
 		std::cerr << e.what() << std::endl;
 		_client_map[client_fd].response_buffer = e.httpResponse();
 	}
 }
+
 
 void	Webserv::handleReceiveEvent(size_t& idx) {
 	int client_fd = _poll_vector[idx].fd;

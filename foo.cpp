@@ -2,24 +2,26 @@
 #include <dirent.h>
 #include <iostream>
 
-#include "HttpCodeException.hpp"
+//#include "HttpCodeException.hpp"
 
-void foo(std::string& path) {
+void foo(const std::string& path) {
 	struct stat info;
 
 	if (stat(path.c_str(), &info) == -1) {
-		throw HttpCodeException(NOT_FOUND, "Error: file " + path + " not found");
+		std::cerr << "Error: file " + path + " not found" << std::endl;
+		//throw HttpCodeException(NOT_FOUND, "Error: file " + path + " not found");
 	} else {
 		if (S_ISDIR(info.st_mode)) {
 			std::cout << "Directory" << std::endl;
-			std::string indexPath = path.append("/index.html");
+			std::string indexPath = path + "/index.html"; // avoid append() to not modify original
 
 			if (stat(indexPath.c_str(), &info) == -1) {
-				if (autoindex) {
+				if (true) {
 					DIR* directory = opendir(path.c_str());
 
 					if (!directory)
-						throw HttpCodeException (NOT_FOUND, "Error: cannot open directory " + path);
+						std::cerr << "Error: cannot open " + path << std::endl;
+						//throw HttpCodeException (NOT_FOUND, "Error: cannot open directory " + path);
 
 					struct dirent* directoryItem;
 					while ((directoryItem = readdir(directory)) != NULL)
@@ -27,9 +29,19 @@ void foo(std::string& path) {
 
 					closedir(directory);
 				} else
-					throw HttpCodeException(FORBIDDEN, "Error: directory listing forbbiden for " + path);
+					std::cerr << "Error: directory listing forbbiden for " + path << std::endl;
+					//throw HttpCodeException(FORBIDDEN, "Error: directory listing forbbiden for " + path);
 			}
 		} else if (S_ISREG(info.st_mode))
 			std::cout << "Regular file" << std::endl; // default
 	}
 }
+
+int	main(void) {
+	std::string main = "main.cpp";
+	std::string dir = "include/";
+	foo(main);
+	foo(dir);
+}
+
+// "<a href=\"" + directoryItem->d_name + "\">" + directoryItem->d_name + "</a>";

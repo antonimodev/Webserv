@@ -153,3 +153,95 @@ curl http://127.0.0.1:8080 & curl http://127.0.0.1:8080 & curl http://127.0.0.1:
 
 
 - EXCALIDRAW: https://excalidraw.com/#room=682b2c5c9c5835bb3fd2,5KFxse5OeORDs3z__RSN_A
+
+
+
+### Funcionamiento del Parser
+
+```cpp
+┌─────────────────────────────────────────┐
+│  1. ConfigParser("file.conf")           │
+│     Constructor: guarda la ruta         │
+└──────────────┬──────────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────────┐
+│  2. parse()                             │
+│     Método principal que orquesta todo  │
+└──────────────┬──────────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────────┐
+│  3. readFile()                          │
+│     Lee file.conf → string completo     │
+│     "server { listen 8080; ... }"       │
+└──────────────┬──────────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────────┐
+│  4. removeComments()                    │
+│     Elimina líneas con # o //           │
+└──────────────┬──────────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────────┐
+│  5. tokenize()                          │
+│     Separa en palabras                  │
+│     ["server", "{", "listen", "8080"]   │
+└──────────────┬──────────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────────┐
+│  6. validateSyntax()                    │
+│     Verifica { } balanceados            │
+└──────────────┬──────────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────────┐
+│  7. parseServerBlock()                  │
+│     Por cada "server {" encontrado:     │
+│     - Crea ServerConfig                 │
+│     - Lee directivas (listen, host...)  │
+│     - Llama parseLocationBlock()        │
+└──────────────┬──────────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────────┐
+│  8. parseLocationBlock()                │
+│     Por cada "location / {":            │
+│     - Crea LocationConfig               │
+│     - Lee directivas (root, methods...) │
+│     - Lo añade al ServerConfig          │
+└──────────────┬──────────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────────┐
+│  9. validateServerConfig()              │
+│     Verifica que tenga puerto, host...  │
+└──────────────┬──────────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────────┐
+│  10. getServers()                       │
+│      Devuelve vector<ServerConfig>      │
+└─────────────────────────────────────────┘
+```
+
+Request: GET /path/to/file
+    ↓
+¿Existe location que coincida?
+    ↓
+SÍ → Usar config de location
+NO → Usar config del server por defecto
+    ↓
+¿Path es un directorio?
+    ↓
+SÍ → ¿Existe index.html?
+    ↓
+    SÍ → Servir index.html
+    NO → ¿autoindex = on?
+        ↓
+        SÍ → Mostrar lista de archivos
+        NO → 403 Forbidden
+    ↓
+NO → Servir archivo directamente

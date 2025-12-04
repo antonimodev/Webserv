@@ -9,6 +9,7 @@ SRCS = 	main.cpp \
 		src/Class/Socket/Socket.cpp \
 		src/Class/Parser/Parser.cpp \
 		src/Class/Webserv/Webserv.cpp \
+		src/Class/ConfParser/ConfParser.cpp \
 		src/file_management.cpp \
 		src/Exceptions/HttpCodeException/HttpCodeException.cpp
 
@@ -43,5 +44,9 @@ help:
 	@echo "$(COLORS)re:$(RESET) Recompiles the program from scratch."
 
 -include $(DEPENDENCIES)
+
+t:
+	c++ src/Class/ConfParser/ConfParser.cpp
+	./a.out
 
 .PHONY: all clean fclean re

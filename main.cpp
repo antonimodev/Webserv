@@ -8,7 +8,7 @@
 #include "webserv.h"
 
 
-int main(void) {
+/* int main(void) {
 	try {
 		Webserv webserv;
 		webserv.addSocket("127.0.0.1", 8080);
@@ -17,4 +17,16 @@ int main(void) {
 		std::cerr << e.what() << std::endl;
 		return 1;
 	}
+} */
+
+int main(int ac, char** av) {
+
+	(void)ac;
+	try {
+		ConfParser parsedFile(av[1]);
+		//parsedFile.getServers();
+	} catch ( const std::exception& e ) {
+		std::cerr << e.what() << std::endl;
+	}
+	return 0;
 }

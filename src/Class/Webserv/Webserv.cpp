@@ -140,8 +140,8 @@ std::string	load_resource(const std::string& full_path, const std::string& route
 
 		// Ensure trailing slash for directory path concatenation
 		if (!full_path.empty() && full_path[full_path.size() - 1] != '/')
-			index_path += "/";
-		index_path += "index.html";
+			index_path.append("/");
+		index_path.append("index.html");
 
 		if (stat(index_path.c_str(), &info) == 0 && S_ISREG(info.st_mode)) {
 			content_type = get_mime_type("html");

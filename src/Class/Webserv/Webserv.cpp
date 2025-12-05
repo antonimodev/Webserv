@@ -6,6 +6,8 @@
 
 #include <sys/stat.h>
 
+#include <cstdio>
+
 #include "webserv.h"
 #include "Webserv.hpp"
 #include "Socket.hpp"
@@ -135,7 +137,7 @@ std::string	load_resource(const std::string& full_path, const std::string& route
 
 	if (S_ISDIR(info.st_mode)) {
 		std::string index_path = full_path;
-		
+
 		// Ensure trailing slash for directory path concatenation
 		if (!full_path.empty() && full_path[full_path.size() - 1] != '/')
 			index_path += "/";
@@ -161,32 +163,41 @@ std::string	load_resource(const std::string& full_path, const std::string& route
 	throw HttpCodeException(FORBIDDEN, "Error: cannot serve " + route);
 }
 
-void	Webserv::processClientRequest(size_t& idx) { 
+
+void Webserv::processClientRequest(size_t& idx) { 
 	const int client_fd = _poll_vector[idx].fd;
 
 	try {
 		_client_map[client_fd].http_request = Parser::parseHttpRequest(_client_map[client_fd].request_buffer);
 
 		const std::string& route = _client_map[client_fd].http_request.route;
+		const std::string  method = _client_map[client_fd].http_request.method;
 		const std::string  base_path = "./static";
 		const std::string  full_path = base_path + route;
 
-		std::string content_type;
-		const std::string msg = load_resource(full_path, route, content_type);
+		if (method == "GET") {
+			std::string content_type;
+			std::string body = load_resource(full_path, route, content_type);
 
-		std::ostringstream oss;
-		oss << msg.size();
+			std::ostringstream oss;
+			oss << body.size();
 
-		_client_map[client_fd].response_buffer =
-			"HTTP/1.1 200 OK\r\n"
-			"Content-Type: " + content_type + "\r\n"
-			"Content-Length: " + oss.str() + "\r\n"
-			"\r\n" + msg;
+			_client_map[client_fd].response_buffer =
+				"HTTP/1.1 200 OK\r\n"
+				"Content-Type: " + content_type + "\r\n"
+				"Content-Length: " + oss.str() + "\r\n"
+				"\r\n" + body;
+		}
+		else if (method == "DELETE")
+			_client_map[client_fd].response_buffer = delete_resource(full_path);
 
 	} catch (const HttpCodeException& e) {
 		std::cerr << e.what() << std::endl;
 		_client_map[client_fd].response_buffer = e.httpResponse();
 	}
+
+	_client_map[client_fd].response_ready = true;
+	_poll_vector[idx].events = POLLOUT;
 }
 
 
@@ -204,6 +215,7 @@ void	Webserv::handleReceiveEvent(size_t& idx) {
 
 	if (_client_map[client_fd].request_buffer.find("\r\n\r\n") != std::string::npos) {
 		processClientRequest(idx);
+
 		_client_map[client_fd].response_ready = true;
 		_poll_vector[idx].events = POLLOUT;
 	}

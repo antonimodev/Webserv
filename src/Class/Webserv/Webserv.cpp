@@ -128,41 +128,8 @@ void	Webserv::disconnectClient(size_t& idx) {
 	std::cout << "Client disconnected" << std::endl;
 }
 
+
 // PROCESS CLIENT REQUEST
-
-std::string	load_resource(const std::string& full_path, const std::string& route, std::string& content_type) {
-	struct stat info;
-
-	if (stat(full_path.c_str(), &info) == -1)
-		throw HttpCodeException(NOT_FOUND, "Error: file " + route + " not found");
-
-	if (S_ISDIR(info.st_mode)) {
-		std::string index_path = full_path;
-
-		// Ensure trailing slash for directory path concatenation
-		if (!full_path.empty() && full_path[full_path.size() - 1] != '/')
-			index_path.append("/");
-		index_path.append("index.html");
-
-		if (stat(index_path.c_str(), &info) == 0 && S_ISREG(info.st_mode)) {
-			content_type = get_mime_type("html");
-			return get_file_content(index_path);
-		}
-
-		// Autoindex: generate directory listing
-		// if autoindex TRUE
-		content_type = get_mime_type("html");
-		return webserv::get_directory_list(full_path, route);
-	}
-
-	if (S_ISREG(info.st_mode)) {
-		const std::string extension = get_extension(route);
-		content_type = get_mime_type(extension);
-		return get_file_content(full_path);
-	}
-
-	throw HttpCodeException(FORBIDDEN, "Error: cannot serve " + route);
-}
 
 
 void Webserv::processClientRequest(size_t& idx) { 

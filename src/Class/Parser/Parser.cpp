@@ -1,8 +1,11 @@
 #include <iostream>
 #include <sstream>
 
-#include "HttpCodeException.hpp"
 #include "Parser.hpp"
+#include "webserv.h"
+
+#include "HttpCodeException.hpp"
+#include "PendingRequestException.hpp"
 
 
 Parser::Parser(void) {}
@@ -97,7 +100,6 @@ void	Parser::parseHeaders(const std::string& request, HttpRequest& http_struct, 
 		if (endl == std::string::npos)
 			break;
 
-		// Empty line = end of headers
 		if (endl == pos) {
 			pos += 2;  // Skip "\r\n"
 			return;
@@ -109,16 +111,14 @@ void	Parser::parseHeaders(const std::string& request, HttpRequest& http_struct, 
 		if (colon_pos == std::string::npos)
 			throw HttpCodeException(BAD_REQUEST, "Error: malformed header line");
 
-		std::string key = header_line.substr(0, colon_pos);
-		std::string value = header_line.substr(colon_pos + 1);
-
-		// Trim leading spaces from value
-		size_t value_start = value.find_first_not_of(' ');
-		if (value_start != std::string::npos)
-			value = value.substr(value_start);
+		std::string key = trim_space(header_line.substr(0, colon_pos));
+		std::string value = trim_space(header_line.substr(colon_pos + 1));
 
 		if (key.empty())
 			throw HttpCodeException(BAD_REQUEST, "Error: empty header key");
+
+		if (key.find(' ') != std::string::npos)
+			throw HttpCodeException(BAD_REQUEST, "Error: header name cannot contain spaces");
 
 		http_struct.headers[key] = value;
 		pos = endl + 2;
@@ -137,8 +137,7 @@ void	Parser::parseBody(const std::string& request, HttpRequest& http_struct, siz
 	std::map<std::string, std::string>::const_iterator it = http_struct.headers.find("Content-Length");
 
 	if (it == http_struct.headers.end()) {
-		// No body expected
-		return;
+		return; // No body expected
 	}
 
 	std::istringstream iss(it->second);
@@ -149,7 +148,7 @@ void	Parser::parseBody(const std::string& request, HttpRequest& http_struct, siz
 		throw HttpCodeException(BAD_REQUEST, "Error: invalid Content-Length");
 
 	if (pos + content_length > request.size())
-		throw HttpCodeException(BAD_REQUEST, "Error: incomplete body");
+		throw PendingRequestException("Info: waiting to complete request body reading");
 
 	http_struct.body = request.substr(pos, content_length);
 }

@@ -1,5 +1,8 @@
 #pragma once
 
+#include <iostream>
+#include <vector>
+
 // --- FILE MANAGEMENT ---
 
 namespace webserv {
@@ -13,3 +16,7 @@ std::string	delete_resource(const std::string& path);
 
 // --- PARSE ---
 const std::string   get_mime_type(const std::string& extension);
+
+// Testing
+std::vector<std::string> split(const std::string& text, const std::string& delimiter);
+std::string trim_space(const std::string& text);

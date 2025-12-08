@@ -14,6 +14,7 @@
 
 #include "PollException.hpp"
 #include "HttpCodeException.hpp"
+#include "PendingRequestException.hpp"
 
 
 Webserv::Webserv(void) {}
@@ -190,7 +191,11 @@ void Webserv::processClientRequest(size_t& idx) {
 		}
 		else if (method == "DELETE")
 			_client_map[client_fd].response_buffer = delete_resource(full_path);
+		//else if (method == "POST")
 
+	} catch (const PendingRequestException& e) {
+		std::cout << "Client " << client_fd << ": " << e.what() << std::endl;
+		return ;
 	} catch (const HttpCodeException& e) {
 		std::cerr << e.what() << std::endl;
 		_client_map[client_fd].response_buffer = e.httpResponse();

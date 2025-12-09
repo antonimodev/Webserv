@@ -131,34 +131,24 @@ void	Webserv::disconnectClient(size_t& idx) {
 
 // PROCESS CLIENT REQUEST
 
-
 void Webserv::processClientRequest(size_t& idx) { 
 	const int client_fd = _poll_vector[idx].fd;
 
 	try {
 		_client_map[client_fd].http_request = Parser::parseHttpRequest(_client_map[client_fd].request_buffer);
 
-		const std::string& route = _client_map[client_fd].http_request.route;
-		const std::string  method = _client_map[client_fd].http_request.method;
-		const std::string  base_path = "./static";
-		const std::string  full_path = base_path + route;
+		const std::string	route = _client_map[client_fd].http_request.route;
+		const std::string	method = _client_map[client_fd].http_request.method;
+		const std::string	base_path = "./static";
+		const std::string	full_path = base_path + route;
+		const std::string	body = _client_map[client_fd].http_request.body;
 
-		if (method == "GET") {
-			std::string content_type;
-			std::string body = load_resource(full_path, route, content_type);
-
-			std::ostringstream oss;
-			oss << body.size();
-
-			_client_map[client_fd].response_buffer =
-				"HTTP/1.1 200 OK\r\n"
-				"Content-Type: " + content_type + "\r\n"
-				"Content-Length: " + oss.str() + "\r\n"
-				"\r\n" + body;
-		}
+		if (method == "GET")
+			_client_map[client_fd].response_buffer = load_resource(full_path, route);
 		else if (method == "DELETE")
 			_client_map[client_fd].response_buffer = delete_resource(full_path);
-		//else if (method == "POST")
+		else if (method == "POST")
+			_client_map[client_fd].response_buffer = save_resource(full_path, body);
 
 	} catch (const PendingRequestException& e) {
 		std::cout << "Client " << client_fd << ": " << e.what() << std::endl;

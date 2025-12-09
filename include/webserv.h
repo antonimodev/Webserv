@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 
+
 // --- FILE MANAGEMENT ---
 
 namespace webserv {
@@ -14,9 +15,9 @@ std::string	get_extension(const std::string& route);
 const std::string   get_mime_type(const std::string& extension);
 
 
-std::string	delete_resource(const std::string& path);
-std::string	load_resource(const std::string& full_path, const std::string& route, std::string& content_type);
-
+const std::string   save_resource(const std::string& full_path, const std::string& body);
+const std::string	load_resource(const std::string& full_path, const std::string& route);
+const std::string	delete_resource(const std::string& path);
 
 
 // Testing

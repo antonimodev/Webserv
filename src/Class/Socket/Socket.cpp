@@ -26,24 +26,28 @@ Socket::~Socket(void) {
 // PRIVATE
 int	Socket::createSocket(int domain, int type, int protocol) {
 	int socket_fd = socket(domain, type, protocol);
+
 	if (socket_fd == -1)
 		throw SocketException("Error: socket() failed to create");
+
 	return socket_fd;
 }
 
 
 void	Socket::setSocketMode(int socket_fd, int mode) {
 	int opt = 1;
+
 	if (setsockopt(socket_fd, SOL_SOCKET, mode, &opt, sizeof(opt)) == -1)
 		throw SocketException("Error: setsockopt() failed");
 }
 
 
 void	Socket::bindSocket(int socket_fd, const std::string& ip, int port, int domain) {
-	sockaddr_in address;
+	struct sockaddr_in address;
 	address.sin_addr.s_addr = inet_addr(ip.c_str());
 	address.sin_port = htons(port);
 	address.sin_family = domain;
+
 	if (bind(socket_fd, (const sockaddr *)&address, sizeof(address)) == -1)
 		throw SocketException("Error: bind() failed");
 }

@@ -11,7 +11,10 @@
 
 #include "DirectoryHandle.hpp"
 #include "webserv.h"
+#include <cerrno>
+
 #include "HttpCodeException.hpp"
+
 
 namespace webserv {
 
@@ -70,42 +73,45 @@ std::string	get_extension(const std::string& route) {
 // --- Resource management ---
 
 
-std::string	load_resource(const std::string& full_path, const std::string& route, std::string& content_type) {
+const std::string	load_resource(const std::string& full_path, const std::string& route) {
 	struct stat info;
 
-	if (stat(full_path.c_str(), &info) == -1)
-		throw HttpCodeException(NOT_FOUND, "Error: file " + route + " not found");
+	std::string body;
+	std::string content_type;
+
+	if (stat(full_path.c_str(), &info) != 0)
+		throw HttpCodeException(NOT_FOUND, "Error: file not found");
 
 	if (S_ISDIR(info.st_mode)) {
 		std::string index_path = full_path;
 
-		// Ensure trailing slash for directory path concatenation
-		if (!full_path.empty() && full_path[full_path.size() - 1] != '/')
-			index_path.append("/");
-		index_path.append("index.html");
+		if (!index_path.empty() && index_path[index_path.size() - 1] != '/')
+			index_path += "/";
+		index_path += "index.html";
 
-		if (stat(index_path.c_str(), &info) == 0 && S_ISREG(info.st_mode)) {
-			content_type = get_mime_type("html");
-			return get_file_content(index_path);
+		if (stat(index_path.c_str(), &info) == 0) {
+			body = get_file_content(index_path);
+			content_type = "text/html";
+		} else {
+			body = webserv::get_directory_list(full_path, route);
+			content_type = "text/html";
 		}
-
-		// Autoindex: generate directory listing
-		// if autoindex TRUE
-		content_type = get_mime_type("html");
-		return webserv::get_directory_list(full_path, route);
+	} else {
+		body = get_file_content(full_path);
+		content_type = get_mime_type(get_extension(full_path));
 	}
 
-	if (S_ISREG(info.st_mode)) {
-		const std::string extension = get_extension(route);
-		content_type = get_mime_type(extension);
-		return get_file_content(full_path);
-	}
+	std::ostringstream oss;
+	oss << body.size();
 
-	throw HttpCodeException(FORBIDDEN, "Error: cannot serve " + route);
+	return "HTTP/1.1 200 OK\r\n"
+		"Content-Type: " + content_type + "\r\n"
+		"Content-Length: " + oss.str() + "\r\n"
+		"\r\n" + body;
 }
 
 
-std::string	delete_resource(const std::string& path) {
+const std::string	delete_resource(const std::string& path) {
 	struct stat info;
 	
 	if (stat(path.c_str(), &info) == -1)
@@ -123,14 +129,23 @@ std::string	delete_resource(const std::string& path) {
 }
 
 
-// CHECK CASE: if file already exist, forbbiden code? truncate? replace?
-void	save_resource(const std::string& full_path, std::string& body) {
+const std::string	save_resource(const std::string& full_path, const std::string& body) {
 	std::ofstream	file(full_path.c_str(), std::ios::binary);
 
-	if (!file.is_open())
-		throw HttpCodeException(, "Error: cannot open file to POST");
+	if (!file.is_open()) {
+		if (errno == EACCES)
+			throw HttpCodeException(FORBIDDEN, "Error: not enough permissions");
+		throw HttpCodeException(INTERNAL_ERROR, "Error: cannot open file to POST");
+	}
 
 	file.write(body.data(), body.size());
+
+	if (file.fail())
+		throw HttpCodeException(INTERNAL_ERROR, "Error: failed to write file content");
+
+	return "HTTP/1.1 201 Created\r\n"
+		"Content-Length: 0 \r\n"
+		"\r\n";
 }
 
 

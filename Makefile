@@ -13,6 +13,7 @@ SRCS = 	main.cpp \
 		src/Exceptions/HttpCodeException/HttpCodeException.cpp \
 		src/Exceptions/ParseException/ParseException.cpp \
 		src/Class/ConfParser/ConfParser.cpp \
+		src/Class/ConfParser/handler_functions.cpp \
 
 all: $(NAME)
 
@@ -47,6 +48,7 @@ help:
 -include $(DEPENDENCIES)
 
 t: re
+	@clear
 	./webserv file.conf
 
 .PHONY: all clean fclean re

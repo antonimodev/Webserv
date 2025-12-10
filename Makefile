@@ -1,6 +1,6 @@
 NAME = webserv
 COMPILER = c++
-INCLUDE = -Iinclude -Isrc -Isrc/Exceptions -Isrc/Exceptions/HttpCodeException -Isrc/Class/Parser -Isrc/Class/Socket -Isrc/Class/Webserv -Isrc/Class/DirectoryHandle
+INCLUDE = -Iinclude -Isrc -Isrc/Exceptions -Isrc/Exceptions/HttpCodeException -Isrc/Class/Parser -Isrc/Class/Socket -Isrc/Class/Webserv -Isrc/Class/DirectoryHandler
 FLAGS = -Wall -Wextra -Werror -std=c++98 -MMD $(INCLUDE)
 OBJ = $(addprefix obj/, $(SRCS:.cpp=.o))
 DEPENDENCIES = $(OBJ:.o=.d)
@@ -9,7 +9,7 @@ SRCS = 	main.cpp \
 		src/Class/Socket/Socket.cpp \
 		src/Class/Parser/Parser.cpp \
 		src/Class/Webserv/Webserv.cpp \
-		src/Class/DirectoryHandle/DirectoryHandle.cpp \
+		src/Class/DirectoryHandler/DirectoryHandler.cpp \
 		src/file_management.cpp \
 		src/Exceptions/HttpCodeException/HttpCodeException.cpp
 

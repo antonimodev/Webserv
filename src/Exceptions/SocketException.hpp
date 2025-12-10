@@ -6,5 +6,5 @@
 
 class SocketException : public std::runtime_error {
 	public:
-		SocketException(const std::string& msg) : std::runtime_error(msg) {}
+		explicit SocketException(const std::string& msg) : std::runtime_error(msg) {}
 };

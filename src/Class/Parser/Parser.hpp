@@ -25,18 +25,40 @@ struct HttpRequest {
 class Parser {
 	private:
 		Parser(void);
-		Parser(const Parser& other);
-		Parser& operator=(const Parser& other);
+		Parser(const Parser&);
+		Parser& operator=(const Parser&);
 		~Parser(void);
 
 		// Request Line validation
-		static void validMethod(const std::string& method);
-		static void validRoute(const std::string& route);
-		static void validVersion(const std::string& version);
+		static void	validMethod(const std::string& method);
+		static void	validRoute(const std::string& route);
+		static void	validVersion(const std::string& version);
 
-		// Parsing stages
+		/**
+		 * @brief Parses the first line: "METHOD ROUTE HTTP/1.1\r\n"
+		 * @param request Full request string.
+		 * @param http_struct Output struct to populate.
+		 * @param pos In/Out position, updated to after "\r\n".
+		 * @complexity O(n) where n is length of request line.
+		 */
 		static void parseRequestLine(const std::string& request, HttpRequest& http_struct, size_t& pos);
+
+		/**
+		 * @brief Parses headers until empty line "\r\n\r\n".
+		 * @param request Full request string.
+		 * @param http_struct Output struct to populate headers map.
+		 * @param pos In/Out position, updated to start of body.
+		 * @complexity O(n) where n is total length of headers.
+		 */
 		static void parseHeaders(const std::string& request, HttpRequest& http_struct, size_t& pos);
+
+		/**
+		 * @brief Extracts body based on Content-Length header.
+		 * @param request Full request string.
+		 * @param http_struct Struct with headers already parsed.
+		 * @param pos Starting position of body.
+		 * @complexity O(n) where n is body length.
+		 */
 		static void parseBody(const std::string& request, HttpRequest& http_struct, size_t pos);
 
 	public:
@@ -48,5 +70,3 @@ class Parser {
 		 */
 		static HttpRequest parseHttpRequest(const std::string& request);
 };
-
-const std::string get_mime_type(const std::string& extension);

@@ -73,7 +73,7 @@ std::string	get_extension(const std::string& route) {
 // --- Resource management ---
 
 
-const std::string	load_resource(const std::string& full_path, const std::string& route) {
+std::string	load_resource(const std::string& full_path, const std::string& route) {
 	struct stat info;
 
 	std::string body;
@@ -111,7 +111,7 @@ const std::string	load_resource(const std::string& full_path, const std::string&
 }
 
 
-const std::string	delete_resource(const std::string& path) {
+std::string	delete_resource(const std::string& path) {
 	struct stat info;
 	
 	if (stat(path.c_str(), &info) == -1)
@@ -129,7 +129,7 @@ const std::string	delete_resource(const std::string& path) {
 }
 
 
-const std::string	save_resource(const std::string& full_path, const std::string& body) {
+std::string	save_resource(const std::string& full_path, const std::string& body) {
 	std::ofstream	file(full_path.c_str(), std::ios::binary);
 
 	if (!file.is_open()) {

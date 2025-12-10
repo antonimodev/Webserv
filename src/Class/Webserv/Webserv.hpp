@@ -17,44 +17,67 @@
 #include "Socket.hpp"
 
 
+/**
+ * @brief Holds the state of a connected client.
+ */
 struct ClientState {
-	std::string request_buffer;  // Stores the incoming request piece by piece
-	std::string response_buffer; // Stores the final response to be sent
-	bool        response_ready;  // Flag: true when we have finished processing and are ready to send
+	std::string	_request_buffer;  // Stores the incoming request piece by piece
+	std::string	_response_buffer; // Stores the final response to be sent
+	bool		_response_ready;  // Flag: true when ready to send
 
-	time_t		last_active;
+	time_t		_last_active;     // Last activity timestamp
 
-	HttpRequest	http_request;
+	HttpRequest	_http_request;    // Parsed HTTP request
 
-	ClientState() : response_ready(false), last_active(time(NULL)) {}
+	ClientState(void) : _response_ready(false), _last_active(time(NULL)) {}
 };
 
 
+/**
+ * @brief Main server class managing sockets, polling, and client connections.
+ */
 class Webserv {
-	private:
-		std::vector<Socket*>		_server_sockets;	// Created as pointer to preserve class outside scope of his own creation
-		std::vector<struct pollfd>	_poll_vector;
-		std::map<int, ClientState>	_client_map;
+private:
+	std::vector<Socket*>		_server_sockets;
+	std::vector<struct pollfd>	_poll_vector;
+	std::map<int, ClientState>	_client_map;
 
-		pollfd	create_struct_pollfd(int fd_socket, short event);
-		void	watchPollEvents();
-		void	addPollEvent(int sock_fd, short event);
+	/**
+	 * @brief Creates a pollfd struct for a socket.
+	 * @param fd_socket File descriptor.
+	 * @param event Events to monitor.
+	 * @return Configured pollfd struct.
+	 */
+	static pollfd createPollfd(int fd_socket, short event);
 
-		void	handleNewConnection(int socket_fd);
-		void	handleReceiveEvent(size_t& idx);
-		void	handleSendEvent(size_t& idx);
+	void	watchPollEvents(void);
+	void	addPollEvent(int sock_fd, short event);
 
-		void	checkTimeout(void);
-		void	resetClientInfo(int socket_fd);
-		bool	isServerSocket(int fd) const;
+	void	handleNewConnection(int socket_fd);
+	void	handleReceiveEvent(size_t& idx);
+	void	handleSendEvent(size_t& idx);
 
-		void	disconnectClient(size_t& idx);
-		void	processClientRequest(size_t& idx);
+	void	checkTimeout(void);
+	void	resetClientInfo(int socket_fd);
 
-	public:
-		Webserv(void);
-		~Webserv(void);
+	/**
+	 * @brief Checks if a file descriptor belongs to a server socket.
+	 * @param fd File descriptor to check.
+	 * @return true if fd is a server socket.
+	 */
+	bool	isServerSocket(int fd) const;
 
-		void	runServer(void);
-		void	addSocket(const char* ip, int port);
+	void	disconnectClient(size_t& idx);
+	void	processClientRequest(size_t& idx);
+
+	// Disable copy (Rule of Three - Webserv manages dynamic resources)
+	Webserv(const Webserv&);
+	Webserv& operator=(const Webserv&);
+
+public:
+	Webserv(void);
+	~Webserv(void);
+
+	void runServer(void);
+	void addSocket(const char* ip, int port);
 };

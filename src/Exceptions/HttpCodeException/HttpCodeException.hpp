@@ -3,6 +3,9 @@
 #include <stdexcept>
 #include <string>
 
+/**
+ * @brief HTTP status codes for error responses.
+ */
 enum HttpStatus {
 	BAD_REQUEST = 400,
 	FORBIDDEN = 403,
@@ -11,13 +14,35 @@ enum HttpStatus {
 	INTERNAL_ERROR = 500
 };
 
+
+/**
+ * @brief Exception representing an HTTP error response.
+ * 
+ * Carries both a log message and the ability to generate
+ * a complete HTTP response string.
+ */
 class HttpCodeException : public std::runtime_error {
 	private:
-		const char*	statusToString(const HttpStatus& status) const;
-		HttpStatus			_status;
+		HttpStatus _status;
+
+		/**
+		 * @brief Converts status code to HTTP status line text.
+		 * @param status HTTP status code.
+		 * @return C-string with status code and reason phrase.
+		 */
+		const char* statusToString(HttpStatus status) const;
 
 	public:
-		HttpCodeException(const HttpStatus& code, const std::string& log_msg);
+		/**
+		 * @brief Constructs an HTTP exception.
+		 * @param code HTTP status code.
+		 * @param log_msg Message for logging/debugging.
+		 */
+		HttpCodeException(HttpStatus code, const std::string& log_msg);
 
-		std::string			httpResponse(void) const;
+		/**
+		 * @brief Generates a complete HTTP error response.
+		 * @return HTTP response string ready to send to client.
+		 */
+		std::string	httpResponse(void) const;
 };

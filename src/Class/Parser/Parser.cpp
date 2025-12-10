@@ -87,13 +87,6 @@ void	Parser::parseRequestLine(const std::string& request, HttpRequest& http_stru
 }
 
 
-/**
- * @brief Parses headers until empty line "\r\n\r\n".
- * @param request Full request string.
- * @param http_struct Output struct to populate headers map.
- * @param pos In/Out position, updated to start of body.
- * @complexity O(n) where n is total length of headers.
- */
 void	Parser::parseHeaders(const std::string& request, HttpRequest& http_struct, size_t& pos) {
 	while (pos < request.size()) {
 		size_t endl = request.find("\r\n", pos);
@@ -126,13 +119,6 @@ void	Parser::parseHeaders(const std::string& request, HttpRequest& http_struct, 
 }
 
 
-/**
- * @brief Extracts body based on Content-Length header.
- * @param request Full request string.
- * @param http_struct Struct with headers already parsed.
- * @param pos Starting position of body.
- * @complexity O(n) where n is body length.
- */
 void	Parser::parseBody(const std::string& request, HttpRequest& http_struct, size_t pos) {
 	std::map<std::string, std::string>::const_iterator it = http_struct.headers.find("Content-Length");
 

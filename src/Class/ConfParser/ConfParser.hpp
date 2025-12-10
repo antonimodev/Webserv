@@ -36,13 +36,26 @@ struct ServerConfig {
     ServerConfig(void);
 };
 
+struct HttpMethods {
+    static bool isValid(const std::string& method) {
+        return method == "GET" ||
+               method == "POST" ||
+               method == "DELETE" ||
+               method == "PUT";
+    }
+};
+
 /**
  * @brief Parser for NGINX-style configuration files
  */
 class ConfParser {
     private:
+	    // ══════════════════════════════════════════════
+        // ESTADO DEL OBJETO (necesita acceso con 'this')
+        // ══════════════════════════════════════════════
         std::stack<std::string>     _brackets;
         std::vector<ServerConfig>   _servers;
+		std::string                 _current_location_path;
         
         // Non-static typedefs
         typedef void (*ServerHandler)(const std::string&, ServerConfig&);
@@ -55,6 +68,9 @@ class ConfParser {
         // Initialization helper
         void initHandlers(void);
         
+		// ════════════════════════════════════════════════════════════════════════════════════════════
+        // MÉTODOS STATIC (NO usan estado del objeto), tambien los typedefs necesitan que sean static (?)
+        // ════════════════════════════════════════════════════════════════════════════════════════════
         // Server handlers
         static void handleServerName(const std::string& value, ServerConfig& config);
         static void handleListen(const std::string& value, ServerConfig& config);
@@ -73,6 +89,11 @@ class ConfParser {
         static void handleReturn(const std::string& value, LocationConfig& location);
         
         // Parsing helpers
+		static std::vector<std::string> tokenizeContent(const std::string& buffer);
+
+		// ══════════════════════════════════════════════
+        // MÉTODOS NO-STATIC (usan '_servers', etc.)
+        // ══════════════════════════════════════════════
 		void parseToken(const std::string& token, const std::vector<std::string>& content, size_t& i);
 		std::string getValue(const std::vector<std::string>& content, size_t& i);
 
@@ -84,16 +105,9 @@ class ConfParser {
         ConfParser(const ConfParser& other);
         ConfParser& operator=(const ConfParser& other);
         
-        /**
-         * @brief Parse configuration file and store in internal state
-         * @param fileName Path to .conf file
-         * @throws OpenFailed if file cannot be opened
-         */
         void parseFile(const char* fileName);
-        
-        /**
-         * @brief Get parsed server configurations
-         * @return Const reference to vector of ServerConfig
-         */
+		void validateServers(void);
         const std::vector<ServerConfig>& getServers(void) const;
+		
+		void printServers(void);
 };

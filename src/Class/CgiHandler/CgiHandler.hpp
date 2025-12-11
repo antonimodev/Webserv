@@ -1,12 +1,11 @@
 #pragma once
 
-// CGI -> Common Gateway Interface
-
-// Receive HttpRequest
-// Absolute PATH of Script to execute
+#include <map>
+#include <string>
 
 #include "Parser.hpp"
 
+// CGI -> Common Gateway Interface
 
 class CgiHandler {
     private:
@@ -21,4 +20,6 @@ class CgiHandler {
     public:
         CgiHandler(const HttpRequest& request, const std::string& full_path);
         ~CgiHandler(void);
+
+		void	executeCgi(const std::string& extension, const std::string& script);
 };

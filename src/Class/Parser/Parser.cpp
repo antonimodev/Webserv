@@ -57,23 +57,23 @@ void	Parser::validVersion(const std::string& version) {
 // PRIVATE - PARSING
 
 
-std::string	Parser::extractQuery(const std::string& full_route) {
-	size_t query_pos = full_route.find('?');
+std::string	Parser::extractRoute(const std::string& full_route) {
+	size_t pos = full_route.find('?');
 
-	if (query_pos != std::string::npos)
-		return full_route.substr(query_pos + 1);
+	if (pos != std::string::npos)
+		return full_route.substr(0, pos);
 
-	return "";
+	return full_route;
 }
 
 
-std::string	Parser::extractRoute(const std::string& full_route) {
-	size_t query_pos = full_route.find('?');
+std::string	Parser::extractQuery(const std::string& full_route) {
+	size_t pos = full_route.find('?');
 
-	if (query_pos != std::string::npos)
-		return full_route.substr(0, query_pos);
+	if (pos != std::string::npos)
+		return full_route.substr(pos + 1);
 
-	return full_route;
+	return "";
 }
 
 

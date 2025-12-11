@@ -1,7 +1,9 @@
 #include <iostream>
+#include <unistd.h>
 
 #include "webserv.h"
 #include "CgiHandler.hpp"
+#include "ExecveBuilder.hpp"
 #include "Parser.hpp"
 
 
@@ -30,9 +32,7 @@ CgiHandler& CgiHandler::operator=(const CgiHandler& other) {
 }
 
 
-CgiHandler::~CgiHandler(void) {
-	// TODO
-}
+CgiHandler::~CgiHandler(void) {}
 
 
 // PRIVATE
@@ -47,30 +47,22 @@ std::string CgiHandler::getHeader(const HttpRequest& request, const std::string&
 	return it->second;
 }
 
-
 //
-int execve(const char *pathname, char *const argv[], char *const envp[]);
 
+void	CgiHandler::executeCgi(const std::string& extension, const std::string& script) {
+	std::vector<std::string> args;
 
-void	foo(const std::string& extension) {
 	if (extension == "php")
-		// pathname = /usr/bin/php-cgi
-	else if (extension == "py")
-		// /usr/bin/python
+		args.push_back("/usr/bin/php-cgi");
 	else
-		throw();
+		args.push_back("/usr/bin/python3");
+
+	args.push_back(script);
+
+	ExecveBuilder	env_builder(_env); // receives map
+	ExecveBuilder	arg_builder(args); // receives vector
 
 	//fork()
-	// pid == 0? child
-		//execve(pathname.c_str(), _ , _);
+
+	execve(args[0].c_str(), arg_builder.get(), env_builder.get());
 }
-/* 
-pathname: depends on extension of script would execute with different binary
-		-> /usr/bin/php-cgi
-		-> /usr/bin/python
-
-
-argv:
-
-
-*/

@@ -93,7 +93,7 @@ void	Parser::parseRequestLine(const std::string& request, HttpRequest& http_stru
 	if (iss >> extra)
 		throw HttpCodeException(BAD_REQUEST, "Error: malformed request line");
 
-	http_struct.route = extractRoute(full_route);
+	http_struct.route = extractRoute(full_route); 
 	http_struct.query = extractQuery(full_route);
 
 	validMethod(http_struct.method);
@@ -173,6 +173,8 @@ HttpRequest Parser::parseHttpRequest(const std::string& request) {
 
 
 // ANOTHER FUNCTIONS
+
+
 const std::string	get_mime_type(const std::string& extension) {
 	if (extension == "html") return "text/html";
 	if (extension == "css")  return "text/css";

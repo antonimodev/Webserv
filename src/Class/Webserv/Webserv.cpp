@@ -129,21 +129,18 @@ void	Webserv::processClientRequest(size_t& idx) {
 	const int client_fd = _poll_vector[idx].fd;
 
 	try {
-		_client_map[client_fd]._http_request = 
-			Parser::parseHttpRequest(_client_map[client_fd]._request_buffer);
+		HttpRequest request = _client_map[client_fd]._http_request;
+		request = Parser::parseHttpRequest(_client_map[client_fd]._request_buffer);
 
-		const std::string route = _client_map[client_fd]._http_request.route;
-		const std::string method = _client_map[client_fd]._http_request.method;
 		const std::string base_path = "./static";
-		const std::string full_path = base_path + route;
-		const std::string body = _client_map[client_fd]._http_request.body;
+		const std::string full_path = base_path + request.route;
 
-		if (method == "GET")
-			_client_map[client_fd]._response_buffer = load_resource(full_path, route);
-		else if (method == "DELETE")
+		if (request.method == "GET")
+			_client_map[client_fd]._response_buffer = load_resource(full_path, request.route);
+		else if (request.method == "DELETE")
 			_client_map[client_fd]._response_buffer = delete_resource(full_path);
-		else if (method == "POST")
-			_client_map[client_fd]._response_buffer = save_resource(full_path, body);
+		else if (request.method == "POST")
+			_client_map[client_fd]._response_buffer = save_resource(full_path, request.body);
 
 	} catch (const PendingRequestException& e) {
 		std::cout << "Client " << client_fd << ": " << e.what() << std::endl;

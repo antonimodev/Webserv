@@ -196,8 +196,7 @@ git commit -m "Add additional changes to PR"
 git push origin your-branch-name
 ```
 
-**Note / Nota:** The PR will be automatically updated with your new commits. No need to create a new PR!
-**El PR se actualizará automáticamente con tus nuevos commits. ¡No necesitas crear un nuevo PR!**
+**Note / Nota:** The PR will be automatically updated with your new commits. No need to create a new PR! / El PR se actualizará automáticamente con tus nuevos commits. ¡No necesitas crear un nuevo PR!
 
 ## Merge
 

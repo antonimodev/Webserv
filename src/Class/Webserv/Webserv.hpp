@@ -37,6 +37,7 @@ class Webserv {
 		std::vector<Socket*>		_server_sockets;	// Created as pointer to preserve class outside scope of his own creation
 		std::vector<struct pollfd>	_poll_vector;
 		std::map<int, ClientState>	_client_map;
+		std::vector<ServerConfig>	_servers;
 
 		pollfd	create_struct_pollfd(int fd_socket, short event);
 		void	watchPollEvents();
@@ -54,9 +55,11 @@ class Webserv {
 		void	processClientRequest(size_t& idx);
 
 	public:
-		Webserv(void);
+
+
+		Webserv(const char* conf_file);
 		~Webserv(void);
 
 		void	runServer(void);
-		void	addSocket(const char* ip, int port);
+		void	addSocket(std::string& ip, int port);
 };

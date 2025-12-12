@@ -277,8 +277,11 @@ void ConfParser::parseFile(const char* fileName) {
 		throw ParseException("Unmatched opening bracket");
 
 	validateServers();
-	printServers();
+	//printServers();
+}
 
+const std::vector<ServerConfig>& ConfParser::getServers() const {
+    return _servers;
 }
 
 void ConfParser::printServers(void) {

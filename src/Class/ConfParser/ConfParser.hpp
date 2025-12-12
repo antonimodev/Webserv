@@ -32,7 +32,7 @@ struct ServerConfig {
 	size_t                          client_max_body_size;
 	std::map<int, std::string>      error_pages;
 	std::map<std::string, LocationConfig> locations;
-	
+
 	ServerConfig(void);
 };
 
@@ -74,13 +74,14 @@ class ConfParser {
 		typedef void (*LocationHandler)(const std::string&, LocationConfig&);
 		
 		// Maps para los handlers
-		void initHandlers(void);
 		std::map<std::string, ServerHandler>   _serverHandlers;
 		std::map<std::string, LocationHandler> _locationHandlers;
-
+		
+		void initHandlers(void);
 		std::vector<std::string> tokenizeContent(const std::string& buffer);
 		void parseToken(const std::string& token, const std::vector<std::string>& content, size_t& i);
 		void saveToken(std::string token, const std::vector<std::string>& content, size_t& i);
+		void validateServers(void);
 
 
 	public:
@@ -92,7 +93,6 @@ class ConfParser {
 		ConfParser& operator=(const ConfParser& other);
 		
 		void parseFile(const char* fileName);
-		void validateServers(void);
 		const std::vector<ServerConfig>& getServers(void) const;
 		
 		void printServers(void);

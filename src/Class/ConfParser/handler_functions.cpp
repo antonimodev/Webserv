@@ -3,44 +3,53 @@
 #include <sstream>
 #include <set>
 
-void ConfParser::handleServerName(const std::string& value, ServerConfig& config) {
+struct AllowedMethods {
+	static bool isValid(const std::string& method) {
+		return method == "GET" ||
+			   method == "POST" ||
+			   method == "DELETE" ||
+			   method == "PUT";
+	}
+};
+
+void handleServerName(const std::string& value, ServerConfig& config) {
     config.server_name = value;
 }
 
-void ConfParser::handleListen(const std::string& value, ServerConfig& config) {
+void handleListen(const std::string& value, ServerConfig& config) {
     std::istringstream iss(value);
     if (!(iss >> config.listen_port))
         throw ParseException("Invalid port number: " + value);
 }
 
-void ConfParser::handleHost(const std::string& value, ServerConfig& config) {
+void handleHost(const std::string& value, ServerConfig& config) {
     config.host = value;
 }
 
-void ConfParser::handleRoot(const std::string& value, ServerConfig& config) {
+void handleRoot(const std::string& value, ServerConfig& config) {
     config.root = value;
 }
 
-void ConfParser::handleIndex(const std::string& value, ServerConfig& config) {
+void handleIndex(const std::string& value, ServerConfig& config) {
     config.index = value;
 }
 
-void ConfParser::handleClientMaxBodySize(const std::string& value, ServerConfig& config) {
+void handleClientMaxBodySize(const std::string& value, ServerConfig& config) {
     std::istringstream iss(value);
     std::string sizeStr;
     iss >> sizeStr;
     
-    size_t multiplier;
+    size_t multiplier = 1;
 
     if (!sizeStr.empty()) {
         char suffix = sizeStr[sizeStr.length() - 1];
 
         if (suffix == 'M' || suffix == 'm')
             multiplier = 1024 * 1024;
-		else if (suffix == 'K' || suffix == 'k')
+        else if (suffix == 'K' || suffix == 'k')
             multiplier = 1024;
 
-		sizeStr = sizeStr.substr(0, sizeStr.length() - 1);
+        sizeStr = sizeStr.substr(0, sizeStr.length() - 1);
     }
     
     size_t num;
@@ -51,7 +60,7 @@ void ConfParser::handleClientMaxBodySize(const std::string& value, ServerConfig&
     config.client_max_body_size = num * multiplier;
 }
 
-void ConfParser::handleErrorPage(const std::string& value, ServerConfig& config) {
+void handleErrorPage(const std::string& value, ServerConfig& config) {
     std::istringstream iss(value);
     int errorCode;
     std::string path;
@@ -62,14 +71,14 @@ void ConfParser::handleErrorPage(const std::string& value, ServerConfig& config)
     config.error_pages[errorCode] = path;
 }
 
-void ConfParser::handleAllowedMethods(const std::string& value, LocationConfig& location) {
+void handleAllowedMethods(const std::string& value, LocationConfig& location) {
     std::istringstream iss(value);
     std::string method;
     
     location.allowed_methods.clear();
     
     while (iss >> method) {
-        if (!HttpMethods::isValid(method))
+        if (!AllowedMethods::isValid(method))
             throw ParseException("Invalid HTTP method: " + method);
         
         location.allowed_methods.push_back(method);
@@ -79,15 +88,15 @@ void ConfParser::handleAllowedMethods(const std::string& value, LocationConfig& 
         throw ParseException("allowed_methods cannot be empty");
 }
 
-void ConfParser::handleLocationRoot(const std::string& value, LocationConfig& location) {
+void handleLocationRoot(const std::string& value, LocationConfig& location) {
     location.root = value;
 }
 
-void ConfParser::handleUploadPath(const std::string& value, LocationConfig& location) {
+void handleUploadPath(const std::string& value, LocationConfig& location) {
     location.upload_path = value;
 }
 
-void ConfParser::handleAutoindex(const std::string& value, LocationConfig& location) {
+void handleAutoindex(const std::string& value, LocationConfig& location) {
     if (value == "on" || value == "true" || value == "1")
         location.autoindex = true;
     else if (value == "off" || value == "false" || value == "0")
@@ -96,7 +105,7 @@ void ConfParser::handleAutoindex(const std::string& value, LocationConfig& locat
         throw ParseException("Invalid autoindex value: " + value);
 }
 
-void ConfParser::handleCgiExtension(const std::string& value, LocationConfig& location) {
+void handleCgiExtension(const std::string& value, LocationConfig& location) {
     std::istringstream iss(value);
     std::string extension, path;
     
@@ -106,7 +115,7 @@ void ConfParser::handleCgiExtension(const std::string& value, LocationConfig& lo
     location.cgi_extension = std::make_pair(extension, path);
 }
 
-void ConfParser::handleReturn(const std::string& value, LocationConfig& location) {
+void handleReturn(const std::string& value, LocationConfig& location) {
     std::istringstream iss(value);
     int code;
     std::string url;

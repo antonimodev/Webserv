@@ -15,29 +15,36 @@
 #include "webserv.h"
 #include "Parser.hpp"
 #include "Socket.hpp"
-//#include "ConfParser.hpp"
-#include "../ConfParser/ConfParser.hpp"
+
+#include "ConfParser.hpp"
 
 
+/**
+ * @brief Holds the state of a connected client.
+ */
 struct ClientState {
-	std::string request_buffer;  // Stores the incoming request piece by piece
-	std::string response_buffer; // Stores the final response to be sent
-	bool        response_ready;  // Flag: true when we have finished processing and are ready to send
+	std::string	_request_buffer;  // Stores the incoming request piece by piece
+	std::string	_response_buffer; // Stores the final response to be sent
+	bool		_response_ready;  // Flag: true when ready to send
 
-	time_t		last_active;
+	time_t		_last_active;     // Last activity timestamp
 
-	HttpRequest	http_request;
+	HttpRequest	_http_request;    // Parsed HTTP request
 
-	ClientState() : response_ready(false), last_active(time(NULL)) {}
+	ClientState(void) : _response_ready(false), _last_active(time(NULL)) {}
 };
 
 
+/**
+ * @brief Main server class managing sockets, polling, and client connections.
+ */
 class Webserv {
 	private:
 		std::vector<Socket*>		_server_sockets;	// Created as pointer to preserve class outside scope of his own creation
 		std::vector<struct pollfd>	_poll_vector;
 		std::map<int, ClientState>	_client_map;
 		std::vector<ServerConfig>	_servers;
+
 
 		pollfd	create_struct_pollfd(int fd_socket, short event);
 		void	watchPollEvents();
@@ -55,8 +62,6 @@ class Webserv {
 		void	processClientRequest(size_t& idx);
 
 	public:
-
-
 		Webserv(const char* conf_file);
 		~Webserv(void);
 

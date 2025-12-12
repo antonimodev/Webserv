@@ -156,7 +156,7 @@ curl http://127.0.0.1:8080 & curl http://127.0.0.1:8080 & curl http://127.0.0.1:
 
 
 
-### Funcionamiento del Parser
+### Parse Workflow
 
 ```cpp
 tokens: ["server", "{", "listen", "8080", "host", "127.0.0.1", "}"]
@@ -192,3 +192,30 @@ SÍ → ¿Existe index.html?
         NO → 403 Forbidden
     ↓
 NO → Servir archivo directamente
+# GITHUB COMMANDS
+
+## Branch
+
+```bash
+git checkout -b branch-name      # Create and switch to new branch
+git checkout branch-name         # Switch branch
+git branch -d branch-name        # Delete local branch (-D to force)
+git push origin --delete branch-name  # Delete remote branch
+```
+
+## Changes
+
+```bash
+git add .                        # Stage all changes
+git commit -m "message"          # Commit changes
+git push origin branch-name      # Push to remote
+git pull                         # Pull from remote
+```
+
+## Merge
+
+```bash
+git checkout main                # Switch to target branch
+git merge branch-name            # Merge branch into current
+git push                         # Push merged changes
+```

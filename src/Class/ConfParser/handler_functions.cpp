@@ -1,44 +1,52 @@
-#include "ConfParser.hpp"
-#include "../Exceptions/ParseException/ParseException.hpp"
 #include <sstream>
 #include <set>
 
+#include "ConfParser.hpp"
+#include "ParseException.hpp"
+
+
 struct AllowedMethods {
 	static bool isValid(const std::string& method) {
-		return method == "GET" ||
-			   method == "POST" ||
-			   method == "DELETE" ||
-			   method == "PUT";
+		return	method == "GET" ||
+				method == "POST" ||
+				method == "DELETE" ||
+				method == "PUT";
 	}
 };
 
-void handleServerName(const std::string& value, ServerConfig& config) {
+
+void	handleServerName(const std::string& value, ServerConfig& config) {
     config.server_name = value;
 }
 
-void handleListen(const std::string& value, ServerConfig& config) {
+
+void	handleListen(const std::string& value, ServerConfig& config) {
     std::istringstream iss(value);
     if (!(iss >> config.listen_port))
         throw ParseException("Invalid port number: " + value);
 }
 
-void handleHost(const std::string& value, ServerConfig& config) {
+
+void	handleHost(const std::string& value, ServerConfig& config) {
     config.host = value;
 }
 
-void handleRoot(const std::string& value, ServerConfig& config) {
+
+void	handleRoot(const std::string& value, ServerConfig& config) {
     config.root = value;
 }
 
-void handleIndex(const std::string& value, ServerConfig& config) {
+
+void	handleIndex(const std::string& value, ServerConfig& config) {
     config.index = value;
 }
 
-void handleClientMaxBodySize(const std::string& value, ServerConfig& config) {
+
+void	handleClientMaxBodySize(const std::string& value, ServerConfig& config) {
     std::istringstream iss(value);
     std::string sizeStr;
     iss >> sizeStr;
-    
+
     size_t multiplier = 1;
 
     if (!sizeStr.empty()) {
@@ -51,16 +59,17 @@ void handleClientMaxBodySize(const std::string& value, ServerConfig& config) {
 
         sizeStr = sizeStr.substr(0, sizeStr.length() - 1);
     }
-    
+
     size_t num;
     std::istringstream numStream(sizeStr);
     if (!(numStream >> num))
         throw ParseException("Invalid client_max_body_size: " + value);
-    
+
     config.client_max_body_size = num * multiplier;
 }
 
-void handleErrorPage(const std::string& value, ServerConfig& config) {
+
+void	handleErrorPage(const std::string& value, ServerConfig& config) {
     std::istringstream iss(value);
     int errorCode;
     std::string path;
@@ -71,32 +80,36 @@ void handleErrorPage(const std::string& value, ServerConfig& config) {
     config.error_pages[errorCode] = path;
 }
 
-void handleAllowedMethods(const std::string& value, LocationConfig& location) {
+
+void	handleAllowedMethods(const std::string& value, LocationConfig& location) {
     std::istringstream iss(value);
     std::string method;
-    
+
     location.allowed_methods.clear();
-    
+
     while (iss >> method) {
         if (!AllowedMethods::isValid(method))
             throw ParseException("Invalid HTTP method: " + method);
-        
+
         location.allowed_methods.push_back(method);
     }
-    
+
     if (location.allowed_methods.empty())
         throw ParseException("allowed_methods cannot be empty");
 }
 
-void handleLocationRoot(const std::string& value, LocationConfig& location) {
+
+void	handleLocationRoot(const std::string& value, LocationConfig& location) {
     location.root = value;
 }
 
-void handleUploadPath(const std::string& value, LocationConfig& location) {
+
+void	handleUploadPath(const std::string& value, LocationConfig& location) {
     location.upload_path = value;
 }
 
-void handleAutoindex(const std::string& value, LocationConfig& location) {
+
+void	handleAutoindex(const std::string& value, LocationConfig& location) {
     if (value == "on" || value == "true" || value == "1")
         location.autoindex = true;
     else if (value == "off" || value == "false" || value == "0")
@@ -105,7 +118,8 @@ void handleAutoindex(const std::string& value, LocationConfig& location) {
         throw ParseException("Invalid autoindex value: " + value);
 }
 
-void handleCgiExtension(const std::string& value, LocationConfig& location) {
+
+void	handleCgiExtension(const std::string& value, LocationConfig& location) {
     std::istringstream iss(value);
     std::string extension, path;
     
@@ -115,7 +129,8 @@ void handleCgiExtension(const std::string& value, LocationConfig& location) {
     location.cgi_extension = std::make_pair(extension, path);
 }
 
-void handleReturn(const std::string& value, LocationConfig& location) {
+
+void	handleReturn(const std::string& value, LocationConfig& location) {
     std::istringstream iss(value);
     int code;
     std::string url;

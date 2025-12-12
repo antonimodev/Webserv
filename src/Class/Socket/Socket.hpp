@@ -28,7 +28,7 @@ private:
 	 * @param mode Option to set (SO_REUSEADDR, etc).
 	 * @throws SocketException on failure.
 	 */
-	static void setSocketMode(int socket_fd, int mode);
+	static void	setSocketMode(int socket_fd, int mode);
 
 	/**
 	 * @brief Binds socket to address and port.
@@ -38,7 +38,7 @@ private:
 	 * @param domain Address family.
 	 * @throws SocketException on failure.
 	 */
-	static void bindSocket(int socket_fd, const std::string& ip, int port, int domain);
+	static void	bindSocket(int socket_fd, const std::string& ip, int port, int domain);
 
 	/**
 	 * @brief Starts listening for connections.
@@ -46,7 +46,7 @@ private:
 	 * @param backlog Maximum pending connections queue size.
 	 * @throws SocketException on failure.
 	 */
-	static void listenSocket(int socket_fd, int backlog);
+	static void	listenSocket(int socket_fd, int backlog);
 
 	// Disable copy to prevent double-close (Rule of Three)
 	Socket(const Socket&);
@@ -77,5 +77,5 @@ public:
 	 * @param socket_fd Socket file descriptor.
 	 * @throws SocketException on failure.
 	 */
-	static void setNonBlocking(int socket_fd);
+	static void	setNonBlocking(int socket_fd);
 };

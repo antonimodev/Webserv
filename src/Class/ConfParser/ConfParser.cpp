@@ -6,29 +6,30 @@
 #include <vector>
 #include <map>
 
-#include "../../Exceptions/ParseException/ParseException.hpp"
+#include "ParseException.hpp"
 #include "ConfParser.hpp"
-#include "../Parser/Parser.hpp"
+#include "Parser.hpp"
 #include "webserv.h"
 
+
 ServerConfig::ServerConfig(void)
-	: server_name(""),
-	  listen_port(0),
-	  host(""),
-	  root(""),
-	  index(""),
-	  client_max_body_size(0),
-	  error_pages(),
-	  locations()
+	:	server_name(""),
+		listen_port(0),
+		host(""),
+		root(""),
+		index(""),
+		client_max_body_size(0),
+		error_pages(),
+		locations()
 {}
 
 LocationConfig::LocationConfig(void)
-	: allowed_methods(),
-	  root(""),
-	  upload_path(""),
-	  autoindex(false),
-	  cgi_extension(std::make_pair("", "")),
-	  redirect(std::make_pair(0, ""))
+	:	allowed_methods(),
+		root(""),
+		upload_path(""),
+		autoindex(false),
+		cgi_extension(std::make_pair("", "")),
+		redirect(std::make_pair(0, ""))
 {}
 
 void	ConfParser::initHandlers(void) {
@@ -51,26 +52,23 @@ void	ConfParser::initHandlers(void) {
 // CONSTRUCTORS
 
 ConfParser::ConfParser(void) {
-
 	initHandlers();
-
 }
 
 ConfParser::ConfParser(const char* fileName) {
-
 	initHandlers();
 	parseFile(fileName);
-
 }
 
-ConfParser::ConfParser(const ConfParser& other) : _brackets(other._brackets), _servers(other._servers), _current_location_path(other._current_location_path) {
-
+ConfParser::ConfParser(const ConfParser& other)
+	:	_brackets(other._brackets),
+		_servers(other._servers),
+		_current_location_path(other._current_location_path)
+		{
 	initHandlers();
-
 }
 
 ConfParser& ConfParser::operator=(const ConfParser& other) {
-
 	if (this != &other) {
 		_brackets = other._brackets;
 		_servers = other._servers;
@@ -78,13 +76,16 @@ ConfParser& ConfParser::operator=(const ConfParser& other) {
 		initHandlers();
 	}
 	return *this;
-
 }
+
 
 ConfParser::~ConfParser(void) {}
 
-std::vector<std::string> ConfParser::tokenizeContent(const std::string& buffer) {
 
+// FUNCTIONS
+
+
+std::vector<std::string> ConfParser::tokenizeContent(const std::string& buffer) {
 	std::stringstream ss(buffer);
 	std::vector<std::string> tokenizedBuffer;
 	std::string line;
@@ -94,26 +95,24 @@ std::vector<std::string> ConfParser::tokenizeContent(const std::string& buffer) 
 		
 		if (commentPos != std::string::npos)
 			line = line.substr(0, commentPos);
-		
+
 		std::stringstream lineStream(line);
 		std::string token;
-		
+
 		while (lineStream >> token)
 			tokenizedBuffer.push_back(token);
 	}
-
 	return tokenizedBuffer;
-
 }
 
-static std::string getValue(const std::vector<std::string>& content, size_t& i) {
 
+static std::string getValue(const std::vector<std::string>& content, size_t& i) {
 	std::string value;
-	
+
 	++i;
 	if (i >= content.size())
 		throw ParseException("Unexpected end of file after directive");
-	
+
 	while (i < content.size()) {
 		const std::string& token = content[i];
 		
@@ -132,16 +131,15 @@ static std::string getValue(const std::vector<std::string>& content, size_t& i) 
 		
 		++i;
 	}
-	
-	throw ParseException("Missing semicolon after directive value");
 
+	throw ParseException("Missing semicolon after directive value");
 }
 
-void ConfParser::saveToken(std::string token, const std::vector<std::string>& content, size_t& i) {
 
+void	ConfParser::saveToken(std::string token, const std::vector<std::string>& content, size_t& i) {
 		bool isServerContext = (_brackets.size() == 1);
 		bool isLocationContext = (_brackets.size() == 2);
-		
+
 		if (!isServerContext && !isLocationContext)
 			throw ParseException("Invalid nesting level for token: " + token);
 
@@ -161,12 +159,11 @@ void ConfParser::saveToken(std::string token, const std::vector<std::string>& co
 		}
 
 		if (isLocationContext) {
-			std::map<std::string, LocationHandler>::iterator it = 
-				_locationHandlers.find(token);
-			
+			std::map<std::string, LocationHandler>::iterator it = _locationHandlers.find(token);
+
 			if (it == _locationHandlers.end())
 				throw ParseException("Unknown location directive: " + token);
-			
+
 			if (_current_location_path.empty())
 				throw ParseException("No location context available");
 
@@ -174,12 +171,10 @@ void ConfParser::saveToken(std::string token, const std::vector<std::string>& co
 			it->second(value, currentLocation);
 			return;
 		}
-
 }
 
 
-void ConfParser::parseToken(const std::string& token, const std::vector<std::string>& content, size_t& i) {
-	
+void	ConfParser::parseToken(const std::string& token, const std::vector<std::string>& content, size_t& i) {
 	if (token == "server" && _brackets.empty()) {
 		_servers.push_back(ServerConfig());
 		return;
@@ -204,12 +199,11 @@ void ConfParser::parseToken(const std::string& token, const std::vector<std::str
 		_brackets.push(token);
 		return;
 	}
-	
+
 	if (token == "}") {
 		if (_brackets.empty())
 			throw ParseException("Unmatched closing bracket");
 		_brackets.pop();
-
 
 		if (_brackets.size() == 1)
 			_current_location_path.clear();
@@ -223,44 +217,41 @@ void ConfParser::parseToken(const std::string& token, const std::vector<std::str
 	saveToken(token, content, i);
 }
 
-void ConfParser::validateServers(void) {
-
+void	ConfParser::validateServers(void) {
 	if (_servers.empty())
 		throw ParseException("Configuration must have at least one server block");
-	
+
 	for (size_t i = 0; i < _servers.size(); ++i) {
 		if (_servers[i].listen_port == 0)
 			throw ParseException("Server must have 'listen' directive");
-		
+
 		if (_servers[i].listen_port < 1 || _servers[i].listen_port > 65535)
 			throw ParseException("Invalid port number (must be 1-65535)");
-		
+
 		if (_servers[i].host.empty())
 			throw ParseException("Server must have 'host' directive");
-		
-		// Validar formato IP básico
+
+		// IP format validation
 		if (_servers[i].host.find_first_not_of("0123456789.") != std::string::npos)
 			throw ParseException("Invalid host format: " + _servers[i].host);
-		
+
 		if (_servers[i].root.empty())
 			_servers[i].root = "./static";
-		
+
 		if (_servers[i].index.empty())
 			_servers[i].index = "index.html";
 
-		// Validar que las locations tengan al menos un método
-		for (std::map<std::string, LocationConfig>::iterator it = _servers[i].locations.begin();
-			 it != _servers[i].locations.end(); ++it) {
-			
+		// Location must have at least 1 method
+		std::map<std::string, LocationConfig>::iterator it;
+		for (it = _servers[i].locations.begin(); it != _servers[i].locations.end(); ++it) {
 			if (it->second.allowed_methods.empty())
 				throw ParseException("Location '" + it->first + "' must have at least one allowed method");
 		}
 	}
-
 }
 
-void ConfParser::parseFile(const char* fileName) {
-	
+
+void	ConfParser::parseFile(const char* fileName) {
 	std::string buffer;
 	std::vector<std::string> content;
 
@@ -280,16 +271,18 @@ void ConfParser::parseFile(const char* fileName) {
 	//printServers();
 }
 
+
 const std::vector<ServerConfig>& ConfParser::getServers() const {
     return _servers;
 }
 
-void ConfParser::printServers(void) {
-	const std::string colorServerName = "\033[1;35m"; // Magenta brillante
-	const std::string colorKey = "\033[1;34m";        // Azul brillante
-	const std::string colorValue = "\033[1;32m";      // Verde brillante
-	const std::string colorLocation = "\033[1;33m";   // Amarillo brillante
-	const std::string colorReset = "\033[0m";         // Reset de color
+/*
+void	ConfParser::printServers(void) {
+	const std::string colorServerName = "\033[1;35m"; // Magenta
+	const std::string colorKey = "\033[1;34m";        // Blue
+	const std::string colorValue = "\033[1;32m";      // Green
+	const std::string colorLocation = "\033[1;33m";   // Yellow
+	const std::string colorReset = "\033[0m";         // Color reset
 
 	std::cout << "Printing _servers:\n" << std::endl;
 	for (size_t s = 0; s < _servers.size(); ++s) {
@@ -321,3 +314,4 @@ void ConfParser::printServers(void) {
 		std::cout << std::endl;
 	}
 }
+	*/

@@ -11,7 +11,7 @@
 #include "webserv.h"
 #include "Webserv.hpp"
 #include "Socket.hpp"
-#include "../ConfParser/ConfParser.hpp"
+#include "ConfParser.hpp"
 
 #include "PollException.hpp"
 #include "HttpCodeException.hpp"

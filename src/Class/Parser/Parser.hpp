@@ -41,7 +41,7 @@ class Parser {
 		 * @param pos In/Out position, updated to after "\r\n".
 		 * @complexity O(n) where n is length of request line.
 		 */
-		static void parseRequestLine(const std::string& request, HttpRequest& http_struct, size_t& pos);
+		static void	parseRequestLine(const std::string& request, HttpRequest& http_struct, size_t& pos);
 
 		/**
 		 * @brief Parses headers until empty line "\r\n\r\n".
@@ -50,7 +50,7 @@ class Parser {
 		 * @param pos In/Out position, updated to start of body.
 		 * @complexity O(n) where n is total length of headers.
 		 */
-		static void parseHeaders(const std::string& request, HttpRequest& http_struct, size_t& pos);
+		static void	parseHeaders(const std::string& request, HttpRequest& http_struct, size_t& pos);
 
 		/**
 		 * @brief Extracts body based on Content-Length header.
@@ -59,7 +59,7 @@ class Parser {
 		 * @param pos Starting position of body.
 		 * @complexity O(n) where n is body length.
 		 */
-		static void parseBody(const std::string& request, HttpRequest& http_struct, size_t pos);
+		static void	parseBody(const std::string& request, HttpRequest& http_struct, size_t pos);
 
 	public:
 		/**

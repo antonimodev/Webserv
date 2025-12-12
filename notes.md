@@ -66,38 +66,27 @@ curl http://127.0.0.1:8080 & curl http://127.0.0.1:8080 & curl http://127.0.0.1:
 ```
 
 
-# Lista de Códigos de Respuesta HTTP
+## List of HTTP Response Codes
 
-## Códigos de estado HTTP 1xx
+### HTTP Status Codes 1xx (Info)
 
-1xx (Información)
+- 100 Continue: The server has received the headers and the client should proceed.
+- 101 Switching Protocols: The server agrees to switch protocols.
+- 102 Processing: The server has received the request and is processing it.
 
-- 100 Continue: El servidor ha recibido los encabezados y el cliente debe continuar.
-- 101 Switching Protocols: El servidor acepta cambiar de protocolo.
-- 102 Processing: El servidor ha recibido la solicitud y está procesándola.
+### HTTP Status Codes 2xx (Success)
 
+- 200 OK: The request was successful.
+- 201 Created: The resource was successfully created.
+- 204 No Content: The request was successful, but there is no content to return.
 
-## Códigos de estado HTTP 2xx
-
-2xx (Éxito)
-
-- 200 OK: La solicitud fue exitosa.
-- 201 Created: El recurso fue creado exitosamente.
-- 204 No Content: La solicitud fue exitosa, pero no hay contenido para devolver.
-
-
-## HTTP Status Codes 3xx
-
-3xx (Redirection)
+### HTTP Status Codes 3xx (Redirection)
 
 - 301 Moved Permanently: The resource has been permanently moved to another URL.
 - 302 Found: The resource is temporarily at another URL.
 - 304 Not Modified: The resource has not been modified since the last request.
 
-
-## HTTP Status Codes 4xx
-
-4xx (Client Error)
+### HTTP Status Codes 4xx (Client Error)
 
 - 400 Bad Request: The request has an incorrect format.
 - 401 Unauthorized: Authentication is required.
@@ -105,16 +94,12 @@ curl http://127.0.0.1:8080 & curl http://127.0.0.1:8080 & curl http://127.0.0.1:
 - 404 Not Found: The resource was not found.
 - 429 Too Many Requests: The request limit has been exceeded.
 
-
-## HTTP Status Codes 5xx
-
-5xx (Server Error)
+### HTTP Status Codes 5xx (Server Error)
 
 - 500 Internal Server Error: Internal server error.
 - 502 Bad Gateway: The server received an invalid response from an upstream server.
 - 503 Service Unavailable: The server cannot handle the request temporarily.
 - 504 Gateway Timeout: The server did not receive a timely response from an upstream server.
-
 
 ## lvalue & rvalue
 
@@ -162,36 +147,38 @@ curl http://127.0.0.1:8080 & curl http://127.0.0.1:8080 & curl http://127.0.0.1:
 tokens: ["server", "{", "listen", "8080", "host", "127.0.0.1", "}"]
 
 i=2: token="listen"
-  ↓ _serverHandlers.find("listen") → encontrado
+  ↓ _serverHandlers.find("listen") → found
   ↓ it->second("8080", config)
-  ↓ Llama a handleListen("8080", config)
+  ↓ Calls handleListen("8080", config)
   ↓ config.listen_port = 8080
 
 i=4: token="host"
-  ↓ _serverHandlers.find("host") → encontrado
+  ↓ _serverHandlers.find("host") → found
   ↓ it->second("127.0.0.1", config)
-  ↓ Llama a handleHost("127.0.0.1", config)
+  ↓ Calls handleHost("127.0.0.1", config)
   ↓ config.host = "127.0.0.1"
 ```
 
 Request: GET /path/to/file
     ↓
-¿Existe location que coincida?
+Is there a matching location?
     ↓
-SÍ → Usar config de location
-NO → Usar config del server por defecto
+YES → Use location config
+NO  → Use default server config
     ↓
-¿Path es un directorio?
+Is the path a directory?
     ↓
-SÍ → ¿Existe index.html?
+YES → Does index.html exist?
     ↓
-    SÍ → Servir index.html
-    NO → ¿autoindex = on?
+    YES → Serve index.html
+    NO  → Is autoindex = on?
         ↓
-        SÍ → Mostrar lista de archivos
-        NO → 403 Forbidden
+        YES → Show file list
+        NO  → 403 Forbidden
     ↓
-NO → Servir archivo directamente
+NO  → Serve file directly
+
+
 # GITHUB COMMANDS
 
 ## Branch

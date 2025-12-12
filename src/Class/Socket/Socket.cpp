@@ -46,7 +46,7 @@ int Socket::createSocket(int domain, int type, int protocol) {
 }
 
 
-void Socket::setSocketMode(int socket_fd, int mode) {
+void	Socket::setSocketMode(int socket_fd, int mode) {
 	int opt = 1;
 
 	if (setsockopt(socket_fd, SOL_SOCKET, mode, &opt, sizeof(opt)) == -1)
@@ -54,7 +54,7 @@ void Socket::setSocketMode(int socket_fd, int mode) {
 }
 
 
-void Socket::bindSocket(int socket_fd, const std::string& ip, int port, int domain) {
+void	Socket::bindSocket(int socket_fd, const std::string& ip, int port, int domain) {
 	struct sockaddr_in address;
 	address.sin_addr.s_addr = inet_addr(ip.c_str());
 	address.sin_port = htons(port);
@@ -65,7 +65,7 @@ void Socket::bindSocket(int socket_fd, const std::string& ip, int port, int doma
 }
 
 
-void Socket::listenSocket(int socket_fd, int backlog) {
+void	Socket::listenSocket(int socket_fd, int backlog) {
 	if (listen(socket_fd, backlog) == -1)
 		throw SocketException("Error: listen() failed");
 }
@@ -77,7 +77,7 @@ int Socket::getSocketFd(void) const {
 }
 
 
-void Socket::setNonBlocking(int socket_fd) {
+void	Socket::setNonBlocking(int socket_fd) {
 	if (fcntl(socket_fd, F_SETFL, O_NONBLOCK) == -1)
 		throw SocketException("Error: fcntl() failed to set non-blocking mode");
 }

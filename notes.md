@@ -174,6 +174,31 @@ git push origin branch-name      # Push to remote
 git pull                         # Pull from remote
 ```
 
+## Add changes to an existing Pull Request / Añadir cambios a un PR existente
+
+**English:** Yes! You can add more changes to an existing Pull Request. Just make new commits to the same branch and push them:
+
+**Español:** ¡Sí! Puedes añadir más cambios a un Pull Request existente. Solo haz nuevos commits en la misma rama y súbelos:
+
+```bash
+# 1. Make sure you're on the correct branch
+git checkout your-branch-name
+
+# 2. Make your changes to the files...
+
+# 3. Stage the changes
+git add .
+
+# 4. Commit the new changes
+git commit -m "Add additional changes to PR"
+
+# 5. Push to the same branch (this updates the PR automatically!)
+git push origin your-branch-name
+```
+
+**Note / Nota:** The PR will be automatically updated with your new commits. No need to create a new PR!
+**El PR se actualizará automáticamente con tus nuevos commits. ¡No necesitas crear un nuevo PR!**
+
 ## Merge
 
 ```bash

@@ -1,7 +1,7 @@
 NAME = webserv
 COMPILER = c++
 
-INCLUDE = -Iinclude -Isrc -Isrc/Exceptions -Isrc/Exceptions/HttpCodeException -Isrc/Class/Parser -Isrc/Class/Socket -Isrc/Class/Webserv -Isrc/Class/ConfParser -Isrc/Class/DirectoryHandle
+INCLUDE = -Iinclude -Isrc -Isrc/Exceptions -Isrc/Exceptions/HttpCodeException -Isrc/Class/Parser -Isrc/Class/Socket -Isrc/Class/Webserv -Isrc/Class/ConfParser -Isrc/Class/DirectoryHandle -Isrc/Exceptions/ParseException
 
 FLAGS = -Wall -Wextra -Werror -std=c++98 -MMD $(INCLUDE)
 OBJ = $(addprefix obj/, $(SRCS:.cpp=.o))
@@ -52,6 +52,6 @@ help:
 
 t: re
 	@clear
-	./webserv file.conf
+	./webserv ./conf/file.conf
 
 .PHONY: all clean fclean re

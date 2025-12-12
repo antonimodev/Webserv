@@ -268,7 +268,7 @@ void	ConfParser::parseFile(const char* fileName) {
 		throw ParseException("Unmatched opening bracket");
 
 	validateServers();
-	//printServers();
+	printServers();
 }
 
 
@@ -276,7 +276,7 @@ const std::vector<ServerConfig>& ConfParser::getServers() const {
     return _servers;
 }
 
-/*
+
 void	ConfParser::printServers(void) {
 	const std::string colorServerName = "\033[1;35m"; // Magenta
 	const std::string colorKey = "\033[1;34m";        // Blue
@@ -314,4 +314,4 @@ void	ConfParser::printServers(void) {
 		std::cout << std::endl;
 	}
 }
-	*/
+	

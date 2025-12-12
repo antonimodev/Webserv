@@ -136,18 +136,18 @@ void	Webserv::disconnectClient(size_t& idx) {
 }
 
 
-void	Webserv::processClientRequest(size_t& idx) { 
+void	Webserv::processClientRequest(size_t& idx) {
 	const int client_fd = _poll_vector[idx].fd;
 
 	try {
 		_client_map[client_fd]._http_request = 
 			Parser::parseHttpRequest(_client_map[client_fd]._request_buffer);
 
-		const std::string route = _client_map[client_fd]._http_request.route;
-		const std::string method = _client_map[client_fd]._http_request.method;
-		const std::string base_path = "./static";
-		const std::string full_path = base_path + route;
-		const std::string body = _client_map[client_fd]._http_request.body;
+		const std::string& route = _client_map[client_fd]._http_request.route;
+		const std::string& method = _client_map[client_fd]._http_request.method;
+		const std::string& base_path = "./static";
+		const std::string& full_path = base_path + route;
+		const std::string& body = _client_map[client_fd]._http_request.body;
 
 		if (method == "GET")
 			_client_map[client_fd]._response_buffer = load_resource(full_path, route);

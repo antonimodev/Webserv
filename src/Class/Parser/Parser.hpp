@@ -10,8 +10,8 @@
 struct HttpRequest {
 	// START_LINE, EXAMPLE: GET /index.html HTTP/1.1
 	std::string method;
-	std::string	query;
-	std::string route;
+	std::string	query;		// e.g	user=antonimo&id=42
+	std::string route; 		// e.g	/script.php
 	std::string version;
 
 	// HEADERS

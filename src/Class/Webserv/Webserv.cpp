@@ -155,7 +155,7 @@ void	Webserv::processClientRequest(size_t& idx) {
 
 		if (isCgiRequest(full_path)) {
 			CgiHandler cgi(request, full_path);
-			// function to execute
+			// cgi.executeCgi(request)
 		} else
 			_client_map[client_fd].response_buffer = handleStaticRequest(request, full_path);
 

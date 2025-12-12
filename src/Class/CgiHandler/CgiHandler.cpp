@@ -5,6 +5,7 @@
 #include "CgiHandler.hpp"
 #include "ExecveBuilder.hpp"
 #include "Parser.hpp"
+#include ""
 
 
 CgiHandler::CgiHandler(const HttpRequest& request, const std::string& full_path) {
@@ -37,7 +38,6 @@ CgiHandler::~CgiHandler(void) {}
 
 // PRIVATE
 
-
 std::string CgiHandler::getHeader(const HttpRequest& request, const std::string& key) {
 	std::map<std::string, std::string>::const_iterator it = request.headers.find(key);
 
@@ -47,17 +47,19 @@ std::string CgiHandler::getHeader(const HttpRequest& request, const std::string&
 	return it->second;
 }
 
-//
 
-void	CgiHandler::executeCgi(const std::string& extension, const std::string& script) {
+// PUBLIC
+
+// objective: [0] /usr/bin/php-cgi [1] script.php [2] NULL
+void	CgiHandler::executeCgi(const HttpRequest& request) {
 	std::vector<std::string> args;
 
-	if (extension == "php")
+	if (get_extension(request.route) == "php")
 		args.push_back("/usr/bin/php-cgi");
 	else
 		args.push_back("/usr/bin/python3");
 
-	args.push_back(script);
+	args.push_back(request.route);
 
 	ExecveBuilder	env_builder(_env); // receives map
 	ExecveBuilder	arg_builder(args); // receives vector

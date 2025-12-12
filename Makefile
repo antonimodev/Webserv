@@ -1,6 +1,8 @@
 NAME = webserv
 COMPILER = c++
-INCLUDE = -Iinclude -Isrc -Isrc/Exceptions -Isrc/Exceptions/HttpCodeException -Isrc/Class/Parser -Isrc/Class/Socket -Isrc/Class/Webserv -Isrc/Class/DirectoryHandle
+
+INCLUDE = -Iinclude -Isrc -Isrc/Exceptions -Isrc/Exceptions/HttpCodeException -Isrc/Class/Parser -Isrc/Class/Socket -Isrc/Class/Webserv -Isrc/Class/ConfParser -Isrc/Class/DirectoryHandle
+
 FLAGS = -Wall -Wextra -Werror -std=c++98 -MMD $(INCLUDE)
 OBJ = $(addprefix obj/, $(SRCS:.cpp=.o))
 DEPENDENCIES = $(OBJ:.o=.d)
@@ -11,7 +13,10 @@ SRCS = 	main.cpp \
 		src/Class/Webserv/Webserv.cpp \
 		src/Class/DirectoryHandle/DirectoryHandle.cpp \
 		src/file_management.cpp \
-		src/Exceptions/HttpCodeException/HttpCodeException.cpp
+		src/Exceptions/HttpCodeException/HttpCodeException.cpp \
+		src/Exceptions/ParseException/ParseException.cpp \
+		src/Class/ConfParser/ConfParser.cpp \
+		src/Class/ConfParser/handler_functions.cpp \
 
 all: $(NAME)
 
@@ -44,5 +49,9 @@ help:
 	@echo "$(COLORS)re:$(RESET) Recompiles the program from scratch."
 
 -include $(DEPENDENCIES)
+
+t: re
+	@clear
+	./webserv file.conf
 
 .PHONY: all clean fclean re

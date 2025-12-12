@@ -154,6 +154,44 @@ curl http://127.0.0.1:8080 & curl http://127.0.0.1:8080 & curl http://127.0.0.1:
 
 - EXCALIDRAW: https://excalidraw.com/#room=682b2c5c9c5835bb3fd2,5KFxse5OeORDs3z__RSN_A
 
+
+
+### Parse Workflow
+
+```cpp
+tokens: ["server", "{", "listen", "8080", "host", "127.0.0.1", "}"]
+
+i=2: token="listen"
+  ↓ _serverHandlers.find("listen") → encontrado
+  ↓ it->second("8080", config)
+  ↓ Llama a handleListen("8080", config)
+  ↓ config.listen_port = 8080
+
+i=4: token="host"
+  ↓ _serverHandlers.find("host") → encontrado
+  ↓ it->second("127.0.0.1", config)
+  ↓ Llama a handleHost("127.0.0.1", config)
+  ↓ config.host = "127.0.0.1"
+```
+
+Request: GET /path/to/file
+    ↓
+¿Existe location que coincida?
+    ↓
+SÍ → Usar config de location
+NO → Usar config del server por defecto
+    ↓
+¿Path es un directorio?
+    ↓
+SÍ → ¿Existe index.html?
+    ↓
+    SÍ → Servir index.html
+    NO → ¿autoindex = on?
+        ↓
+        SÍ → Mostrar lista de archivos
+        NO → 403 Forbidden
+    ↓
+NO → Servir archivo directamente
 # GITHUB COMMANDS
 
 ## Branch

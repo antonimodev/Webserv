@@ -11,6 +11,7 @@
 #include "webserv.h"
 #include "Webserv.hpp"
 #include "Socket.hpp"
+#include "../ConfParser/ConfParser.hpp"
 
 #include "PollException.hpp"
 #include "HttpCodeException.hpp"
@@ -18,7 +19,17 @@
 #include "PendingRequestException.hpp"
 
 
-Webserv::Webserv(void) {}
+Webserv::Webserv(const char* conf_file) {
+	ConfParser parser(conf_file);
+	_servers = parser.getServers();
+
+	//webserv.addSocket("127.0.0.1", 8080);
+	//addSocket(_servers[0].host, _servers[0].listen_port);
+
+	for (size_t i = 0; i < _servers.size(); ++i) {
+        addSocket(_servers[i].host, _servers[i].listen_port);
+	}
+}
 
 
 // Disabled copy operations
@@ -106,7 +117,7 @@ bool	Webserv::isServerSocket(int fd) const {
 }
 
 
-void	Webserv::addSocket(const char* ip, int port) {
+void	Webserv::addSocket(std::string& ip, int port) {
 	Socket* new_socket = new Socket(ip, port);
 
 	_server_sockets.push_back(new_socket);

@@ -66,11 +66,11 @@ class Webserv {
 		 * @return true if fd is a server socket.
 		 */
 		bool	isServerSocket(int fd) const;
-		bool	isCgiRequest(const HttpRequest& request, const std::string& full_path);
+		bool	isCgiRequest(const std::string& full_path);
 
-		void	disconnectClient(size_t& idx);
-		void	processClientRequest(size_t& idx);
-		void	handleStaticRequest(const std::string& full_path);
+		void		disconnectClient(size_t& idx);
+		void		processClientRequest(size_t& idx);
+		std::string	handleStaticRequest(const HttpRequest& request, const std::string& full_path);
 
 		// Disable copy (Rule of Three - Webserv manages dynamic resources)
 		Webserv(const Webserv&);

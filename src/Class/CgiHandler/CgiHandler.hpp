@@ -15,6 +15,7 @@ class CgiHandler {
         CgiHandler(const CgiHandler&);
         CgiHandler& operator=(const CgiHandler&);
 
+        
         std::string getHeader(const HttpRequest& request, const std::string& key);
 
     public:

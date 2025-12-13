@@ -11,6 +11,7 @@
 #include "webserv.h"
 #include "Webserv.hpp"
 #include "Socket.hpp"
+#include "CgiHandler.hpp"
 
 #include "PollException.hpp"
 #include "HttpCodeException.hpp"
@@ -124,13 +125,15 @@ void	Webserv::disconnectClient(size_t& idx) {
 }
 
 
-void	Webserv::handleStaticRequest(const HttpRequest& request, const std::string& full_path) {
+std::string	Webserv::handleStaticRequest(const HttpRequest& request, const std::string& full_path) {
 	if (request.method == "GET")
-		_client_map[client_fd]._response_buffer = load_resource(full_path, request.route);
+		return load_resource(full_path, request.route);
 	else if (request.method == "DELETE")
-		_client_map[client_fd]._response_buffer = delete_resource(full_path);
+		return delete_resource(full_path);
 	else if (request.method == "POST")
-		_client_map[client_fd]._response_buffer = save_resource(full_path, request.body);
+		return save_resource(full_path, request.body);
+
+	return "";
 }
 
 
@@ -157,7 +160,7 @@ void	Webserv::processClientRequest(size_t& idx) {
 			CgiHandler cgi(request, full_path);
 			// cgi.executeCgi(request)
 		} else
-			_client_map[client_fd].response_buffer = handleStaticRequest(request, full_path);
+			_client_map[client_fd]._response_buffer = handleStaticRequest(request, full_path);
 
 	} catch (const PendingRequestException& e) {
 		std::cout << "Client " << client_fd << ": " << e.what() << std::endl;

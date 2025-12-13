@@ -1,11 +1,14 @@
 #include <iostream>
 #include <unistd.h>
+#include <sys/wait.h>
 
 #include "webserv.h"
 #include "CgiHandler.hpp"
 #include "ExecveBuilder.hpp"
 #include "Parser.hpp"
-#include ""
+#include "Pipe.hpp"
+
+#include "PipeException.hpp"
 
 
 CgiHandler::CgiHandler(const HttpRequest& request, const std::string& full_path) {
@@ -63,8 +66,19 @@ void	CgiHandler::executeCgi(const HttpRequest& request) {
 
 	ExecveBuilder	env_builder(_env); // receives map
 	ExecveBuilder	arg_builder(args); // receives vector
+	
+	try {
+		Pipe pipes;
+		int status;
 
-	//fork()
+		pid_t child = fork();
 
-	execve(args[0].c_str(), arg_builder.get(), env_builder.get());
+		if (child == 0)
+			execve(args[0].c_str(), arg_builder.get(), env_builder.get());
+		else
+			waitpid(child, &status, 0); // just for testing, wouldn't be block
+	} catch (const PipeException& e) {
+		std::cerr << e.what() << std::cout; // not sure about this catch
+		// return ¿? shouldn't continue (STILL IN DEVELOPMENT)
+	}
 }

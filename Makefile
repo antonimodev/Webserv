@@ -6,9 +6,10 @@ INCLUDE = 	-Iinclude \
 			-Isrc/Exceptions \
 			-Isrc/Exceptions/HttpCodeException \
 			-Isrc/Class/Parser \
+			-Isrc/Class/Pipe \
 			-Isrc/Class/Socket \
 			-Isrc/Class/Webserv \
-			-Isrc/Class/DirectoryHandler #\
+			-Isrc/Class/DirectoryHandler \
 			-Isrc/Class/CgiHandler \
 			-Isrc/Class/ExecveBuilder
 
@@ -21,6 +22,9 @@ SRCS = 	main.cpp \
 		src/Class/Parser/Parser.cpp \
 		src/Class/Webserv/Webserv.cpp \
 		src/Class/DirectoryHandler/DirectoryHandler.cpp \
+		src/Class/CgiHandler/CgiHandler.cpp \
+		src/Class/ExecveBuilder/ExecveBuilder.cpp \
+		src/Class/Pipe/Pipe.cpp \
 		src/file_management.cpp \
 		src/Exceptions/HttpCodeException/HttpCodeException.cpp
 

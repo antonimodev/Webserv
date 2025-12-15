@@ -10,6 +10,7 @@
  * @brief Configuration for a location block
  */
 struct LocationConfig {
+	std::string						path; // added
 	std::vector<std::string>        allowed_methods;
 	std::string                     root;
 	std::string                     upload_path;

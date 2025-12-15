@@ -179,6 +179,37 @@ YES → Does index.html exist?
 NO  → Serve file directly
 
 
+## 📋 Roadmap de Implementación
+
+| Módulo    | Tarea                        | Estado         | Prioridad      |
+|-----------|------------------------------|:--------------:|:--------------:|
+| Módulo 1  | Configuration Parser         | ✅ Completo    | -              |
+| Módulo 4  | Routing con locations        | ❌ Falta       | 🔥 **ALTA**    |
+| Módulo 4  | Chunked encoding             | ❌ Falta       | 🔥 **ALTA**    |
+| Módulo 4  | Validaciones (methods, body size) | ❌ Falta  | 🟡 MEDIA       |
+| Módulo 4  | Error pages personalizadas   | ❌ Falta       | 🟡 MEDIA       |
+| Módulo 4  | Redirections                 | ❌ Falta       | 🟡 MEDIA       |
+| Módulo 4  | Integración CGI              | ⚠️ Punto de entrada | 🟡 MEDIA  |
+
+---
+
+### 🎯 **Plan de Acción**
+
+1. **Routing**  
+   _Sin esto, la configuración que parseaste no se usa. Es tu responsabilidad crítica._
+
+2. **Chunked encoding**  
+   _Necesario para requests grandes (uploads) y parte del subject._
+
+3. **Validaciones**  
+   _Métodos permitidos, body size, aplicar error pages._
+
+4. **Redirections**  
+   _Return 301/302 según configuración._
+
+---
+
+
 # GITHUB COMMANDS
 
 ## Branch

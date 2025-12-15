@@ -18,6 +18,8 @@
 #include "SocketException.hpp"
 #include "PendingRequestException.hpp"
 
+#include <algorithm> // added for std::find to find in vector
+
 
 Webserv::Webserv(const char* conf_file) {
 	ConfParser parser(conf_file);
@@ -27,7 +29,7 @@ Webserv::Webserv(const char* conf_file) {
 	//addSocket(_servers[0].host, _servers[0].listen_port);
 
 	for (size_t i = 0; i < _servers.size(); ++i) {
-        addSocket(_servers[i].host, _servers[i].listen_port);
+		addSocket(_servers[i].host, _servers[i].listen_port);
 	}
 }
 
@@ -135,7 +137,32 @@ void	Webserv::disconnectClient(size_t& idx) {
 	std::cout << "Client disconnected" << std::endl;
 }
 
+static LocationConfig* findBestLocation(const std::string& route, ServerConfig* config) {
+    std::string best_match = "";
+    LocationConfig* best_location = NULL;
+    
+    std::map<std::string, LocationConfig>::iterator it;
+    for (it = config->locations.begin(); it != config->locations.end(); ++it) {
+        const std::string& path = it->first;
+        if (route.compare(0, path.length(), path) == 0) {
+            if (path.length() > best_match.length()) {
+                best_match = path;
+                best_location = &(it->second);
+            }
+        }
+    }
+    return best_location;
+}
 
+static bool isMethodAllowed(const std::string& method, const std::vector<std::string>& allowed) {
+    if (allowed.empty()) // if empty, all methods are allowed
+        return true;
+    
+    return std::find(allowed.begin(), allowed.end(), method) != allowed.end();
+}
+
+
+// added: new changes
 void	Webserv::processClientRequest(size_t& idx) {
 	const int client_fd = _poll_vector[idx].fd;
 
@@ -145,9 +172,36 @@ void	Webserv::processClientRequest(size_t& idx) {
 
 		const std::string& route = _client_map[client_fd]._http_request.route;
 		const std::string& method = _client_map[client_fd]._http_request.method;
-		const std::string& base_path = "./static";
-		const std::string& full_path = base_path + route;
 		const std::string& body = _client_map[client_fd]._http_request.body;
+
+
+		LocationConfig* location = findBestLocation(route, _client_map[client_fd]._server_config);
+		std::string base_path;
+		std::string remaining_path;
+	
+		if (location != NULL) {
+			if (location->root.empty()) // if this location does not have any root, we use his server root.
+				base_path = _client_map[client_fd]._server_config->root;
+			else
+				base_path = location->root;
+
+			remaining_path = route.substr(location->path.length());
+		} else {
+			base_path = _client_map[client_fd]._server_config->root;
+			remaining_path = route;
+		}
+
+		std::string full_path = base_path + remaining_path;
+
+		// Ensure path separator between base_path and remaining_path
+		if (!base_path.empty() && base_path[base_path.length() - 1] != '/' && 
+		    !remaining_path.empty() && remaining_path[0] != '/') {
+			full_path = base_path + "/" + remaining_path;
+		}
+
+		if (location != NULL && !isMethodAllowed(method, location->allowed_methods)) {
+			throw HttpCodeException(METHOD_NOT_ALLOWED, "Method not allowed");
+		}
 
 		if (method == "GET")
 			_client_map[client_fd]._response_buffer = load_resource(full_path, route);
@@ -185,6 +239,7 @@ void	Webserv::handleNewConnection(int socket_fd) {
 	if (agent >= 0) {
 		addPollEvent(agent, POLLIN);
 		_client_map[agent] = ClientState();
+		_client_map[agent]._server_config = getServerBySocketFd(socket_fd); // added
 		std::cout << "New client connected: " << agent << std::endl;
 	}
 }
@@ -225,6 +280,17 @@ void	Webserv::handleSendEvent(size_t& idx) {
 			_poll_vector[idx].events = POLLIN;
 		}
 	}
+}
+
+// added
+// Returns the ServerConfig of the socket_fd ( _server_sockets[i] )
+ServerConfig* Webserv::getServerBySocketFd(int socket_fd) {
+	for (size_t i = 0; i < _server_sockets.size(); ++i) {
+		if (_server_sockets[i]->getSocketFd() == socket_fd) {
+			return &_servers[i];
+		}
+	}
+	return NULL;
 }
 
 

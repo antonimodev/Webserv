@@ -24,7 +24,8 @@ ServerConfig::ServerConfig(void)
 {}
 
 LocationConfig::LocationConfig(void)
-	:	allowed_methods(),
+	:	path(""),
+		allowed_methods(),
 		root(""),
 		upload_path(""),
 		autoindex(false),
@@ -190,6 +191,7 @@ void	ConfParser::parseToken(const std::string& token, const std::vector<std::str
 			throw ParseException("Duplicate location block: " + path);
 		
 		_servers.back().locations[path] = LocationConfig();
+		_servers.back().locations[path].path = path; // lol
 		_current_location_path = path;
 		++i;
 		return;
@@ -268,7 +270,7 @@ void	ConfParser::parseFile(const char* fileName) {
 		throw ParseException("Unmatched opening bracket");
 
 	validateServers();
-	printServers();
+	//printServers();
 }
 
 

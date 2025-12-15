@@ -30,7 +30,9 @@ struct ClientState {
 
 	HttpRequest	_http_request;    // Parsed HTTP request
 
-	ClientState(void) : _response_ready(false), _last_active(time(NULL)) {}
+	ServerConfig* _server_config; // added: pointer to the server the client came from
+
+	ClientState(void) : _response_ready(false), _last_active(time(NULL)), _server_config(NULL) {}
 };
 
 
@@ -77,6 +79,9 @@ class Webserv {
 		// Disable copy (Rule of Three - Webserv manages dynamic resources)
 		Webserv(const Webserv&);
 		Webserv& operator=(const Webserv&);
+
+		// added
+		ServerConfig* getServerBySocketFd(int socket_fd);
 
 	public:
 		Webserv(void);

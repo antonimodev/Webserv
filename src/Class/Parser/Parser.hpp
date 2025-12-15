@@ -10,7 +10,8 @@
 struct HttpRequest {
 	// START_LINE, EXAMPLE: GET /index.html HTTP/1.1
 	std::string method;
-	std::string route;
+	std::string	query;		// e.g	user=antonimo&id=42
+	std::string route; 		// e.g	/script.php
 	std::string version;
 
 	// HEADERS
@@ -18,7 +19,6 @@ struct HttpRequest {
 
 	// BODY (Content to POST (images, text...))
 	std::string body;
-
 };
 
 
@@ -33,6 +33,9 @@ class Parser {
 		static void	validMethod(const std::string& method);
 		static void	validRoute(const std::string& route);
 		static void	validVersion(const std::string& version);
+
+		static std::string	extractRoute(const std::string& full_route);
+		static std::string	extractQuery(const std::string& full_route);
 
 		/**
 		 * @brief Parses the first line: "METHOD ROUTE HTTP/1.1\r\n"

@@ -40,31 +40,49 @@ struct ClientState {
  */
 class Webserv {
 	private:
-		std::vector<Socket*>		_server_sockets;	// Created as pointer to preserve class outside scope of his own creation
+		std::vector<Socket*>		_server_sockets;
 		std::vector<struct pollfd>	_poll_vector;
 		std::map<int, ClientState>	_client_map;
 		std::vector<ServerConfig>	_servers;
 
+		/**
+		 * @brief Creates a pollfd struct for a socket.
+		 * @param fd_socket File descriptor.
+		 * @param event Events to monitor.
+		 * @return Configured pollfd struct.
+		 */
+		static pollfd createPollfd(int fd_socket, short event);
 
-		pollfd	create_struct_pollfd(int fd_socket, short event);
-		void	watchPollEvents();
-		void	addPollEvent(int sock_fd, short event);
+		void		watchPollEvents(void);
+		void		addPollEvent(int sock_fd, short event);
 
-		void	handleNewConnection(int socket_fd);
-		void	handleReceiveEvent(size_t& idx);
-		void	handleSendEvent(size_t& idx);
+		void		handleNewConnection(int socket_fd);
+		void		handleReceiveEvent(size_t& idx);
+		void		handleSendEvent(size_t& idx);
 
-		void	checkTimeout(void);
-		void	resetClientInfo(int socket_fd);
-		bool	isServerSocket(int fd) const;
+		void		checkTimeout(void);
+		void		resetClientInfo(int socket_fd);
 
-		void	disconnectClient(size_t& idx);
-		void	processClientRequest(size_t& idx);
+		/**
+		 * @brief Checks if a file descriptor belongs to a server socket.
+		 * @param fd File descriptor to check.
+		 * @return true if fd is a server socket.
+		 */
+		bool		isServerSocket(int fd) const;
+		bool		isCgiRequest(const std::string& full_path);
+
+		void		disconnectClient(size_t& idx);
+		void		processClientRequest(size_t& idx);
+		std::string	handleStaticRequest(const HttpRequest& request, const std::string& full_path);
+
+		// Disable copy (Rule of Three - Webserv manages dynamic resources)
+		Webserv(const Webserv&);
+		Webserv& operator=(const Webserv&);
 
 	public:
 		Webserv(const char* conf_file);
 		~Webserv(void);
 
 		void	runServer(void);
-		void	addSocket(std::string& ip, int port);
+		void	addSocket(const std::string& ip, int port);
 };

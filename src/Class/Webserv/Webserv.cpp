@@ -11,6 +11,7 @@
 #include "webserv.h"
 #include "Webserv.hpp"
 #include "Socket.hpp"
+#include "CgiHandler.hpp"
 #include "ConfParser.hpp"
 
 #include "PollException.hpp"
@@ -56,7 +57,7 @@ Webserv::~Webserv(void) {
 
 
 pollfd Webserv::createPollfd(int socket_fd, short event) {
-	pollfd pfd;
+	struct pollfd pfd;
 
 	pfd.fd = socket_fd;
 	pfd.events = event;
@@ -108,6 +109,13 @@ void	Webserv::resetClientInfo(int socket_fd) {
 }
 
 
+void	Webserv::addSocket(const std::string& ip, int port) {
+	Socket* new_socket = new Socket(ip, port);
+
+	_server_sockets.push_back(new_socket);
+}
+
+
 bool	Webserv::isServerSocket(int fd) const {
 	for (size_t i = 0; i < _server_sockets.size(); ++i) {
 		if (_server_sockets[i]->getSocketFd() == fd)
@@ -115,14 +123,6 @@ bool	Webserv::isServerSocket(int fd) const {
 	}
 	return false;
 }
-
-
-void	Webserv::addSocket(std::string& ip, int port) {
-	Socket* new_socket = new Socket(ip, port);
-
-	_server_sockets.push_back(new_socket);
-}
-
 
 
 void	Webserv::disconnectClient(size_t& idx) {
@@ -136,25 +136,42 @@ void	Webserv::disconnectClient(size_t& idx) {
 }
 
 
+std::string	Webserv::handleStaticRequest(const HttpRequest& request, const std::string& full_path) {
+	if (request.method == "GET")
+		return load_resource(full_path, request.route);
+	else if (request.method == "DELETE")
+		return delete_resource(full_path);
+	else if (request.method == "POST")
+		return save_resource(full_path, request.body);
+
+	return "";
+}
+
+
+bool	Webserv::isCgiRequest(const std::string& full_path) {
+	std::string extension = get_extension(full_path);
+
+	if (extension == "php" || extension == "py")
+		return true;
+
+	return false;
+}
+
+
 void	Webserv::processClientRequest(size_t& idx) { 
 	const int client_fd = _poll_vector[idx].fd;
 
 	try {
-		_client_map[client_fd]._http_request = 
-			Parser::parseHttpRequest(_client_map[client_fd]._request_buffer);
+		_client_map[client_fd]._http_request = Parser::parseHttpRequest(_client_map[client_fd]._request_buffer);
 
-		const std::string route = _client_map[client_fd]._http_request.route;
-		const std::string method = _client_map[client_fd]._http_request.method;
-		const std::string base_path = "./static";
-		const std::string full_path = base_path + route;
-		const std::string body = _client_map[client_fd]._http_request.body;
+		const HttpRequest& request = _client_map[client_fd]._http_request;
+		const std::string full_path = "./static" + request.route;
 
-		if (method == "GET")
-			_client_map[client_fd]._response_buffer = load_resource(full_path, route);
-		else if (method == "DELETE")
-			_client_map[client_fd]._response_buffer = delete_resource(full_path);
-		else if (method == "POST")
-			_client_map[client_fd]._response_buffer = save_resource(full_path, body);
+		if (isCgiRequest(full_path)) {
+			CgiHandler cgi(request, full_path);
+			_client_map[client_fd]._response_buffer = cgi.executeCgi(request);
+		} else
+			_client_map[client_fd]._response_buffer = handleStaticRequest(request, full_path);
 
 	} catch (const PendingRequestException& e) {
 		std::cout << "Client " << client_fd << ": " << e.what() << std::endl;

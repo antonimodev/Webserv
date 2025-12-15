@@ -57,27 +57,44 @@ void	Parser::validVersion(const std::string& version) {
 // PRIVATE - PARSING
 
 
-/**
- * @brief Parses the first line: "METHOD ROUTE HTTP/1.1\r\n"
- * @param request Full request string.
- * @param http_struct Output struct to populate.
- * @param pos In/Out position, updated to after "\r\n".
- * @complexity O(n) where n is length of request line.
- */
+std::string	Parser::extractRoute(const std::string& full_route) {
+	size_t pos = full_route.find('?');
+
+	if (pos != std::string::npos)
+		return full_route.substr(0, pos);
+
+	return full_route;
+}
+
+
+std::string	Parser::extractQuery(const std::string& full_route) {
+	size_t pos = full_route.find('?');
+
+	if (pos != std::string::npos)
+		return full_route.substr(pos + 1);
+
+	return "";
+}
+
+
 void	Parser::parseRequestLine(const std::string& request, HttpRequest& http_struct, size_t& pos) {
 	size_t endl = request.find("\r\n", pos);
 	if (endl == std::string::npos)
 		throw HttpCodeException(BAD_REQUEST, "Error: malformed request line");
 
-	std::string request_line = request.substr(pos, endl - pos); // use pos for generic purposes
+	std::string request_line = request.substr(pos, endl - pos);
 	std::istringstream iss(request_line);
 	std::string extra;
+	std::string full_route;
 
-	if (!(iss >> http_struct.method >> http_struct.route >> http_struct.version))
+	if (!(iss >> http_struct.method >> full_route >> http_struct.version))
 		throw HttpCodeException(BAD_REQUEST, "Error: malformed request line");
 
 	if (iss >> extra)
 		throw HttpCodeException(BAD_REQUEST, "Error: malformed request line");
+
+	http_struct.route = extractRoute(full_route); 
+	http_struct.query = extractQuery(full_route);
 
 	validMethod(http_struct.method);
 	validRoute(http_struct.route);
@@ -156,6 +173,8 @@ HttpRequest Parser::parseHttpRequest(const std::string& request) {
 
 
 // ANOTHER FUNCTIONS
+
+
 const std::string	get_mime_type(const std::string& extension) {
 	if (extension == "html") return "text/html";
 	if (extension == "css")  return "text/css";

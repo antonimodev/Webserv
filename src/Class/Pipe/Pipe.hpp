@@ -3,6 +3,11 @@
 
 class Pipe {
 	private:
+		enum RedirectionMode {
+			READ,
+			WRITE
+		};
+
 		int _fd[2];
 
 		Pipe(const Pipe&);
@@ -12,9 +17,11 @@ class Pipe {
 		Pipe(void);
 		~Pipe(void);
 
-		int getReadPipe(void) const;
-		int getWritePipe(void) const;
+		int		getReadPipe(void) const;
+		int		getWritePipe(void) const;
 
-		void closeReadPipe(void);
-		void closeWritePipe(void);
+		void	closeReadPipe(void);
+		void	closeWritePipe(void);
+
+		void	fdRedirection(int src, RedirectionMode mode);
 };

@@ -55,6 +55,21 @@ std::string	get_file_content(const std::string& path) {
 	return content;
 }
 
+std::string	get_fd_content(int fd) {
+	char		buffer[4096]; // standard
+	ssize_t		bytes_read;
+	std::string	content;
+	
+	while ((bytes_read = read(fd, buffer, sizeof(buffer))) > 0)
+		content.append(buffer, bytes_read);
+	
+	if (bytes_read == -1)
+		throw HttpCodeException(INTERNAL_ERROR, "Error: failed to read from fd");
+
+	return content;
+}
+
+
 
 std::string	get_extension(const std::string& route) {
 	std::string::size_type dot_pos = route.rfind('.');

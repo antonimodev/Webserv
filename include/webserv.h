@@ -25,6 +25,14 @@ namespace webserv {
 std::string get_file_content(const std::string& path);
 
 /**
+ * @brief Reads entire fd content into string.
+ * @param fd file descriptor to read.
+ * @return Fd contents as string.
+ * @throws HttpCodeException if file cannot be opened.
+ */
+std::string	get_fd_content(int fd);
+
+/**
  * @brief Extracts file extension from path.
  * @param route Path or route string.
  * @return Extension without dot, or empty string.

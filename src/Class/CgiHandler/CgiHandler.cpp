@@ -54,7 +54,7 @@ std::string CgiHandler::getHeader(const HttpRequest& request, const std::string&
 // PUBLIC
 
 // objective: [0] /usr/bin/php-cgi [1] script.php [2] NULL
-void	CgiHandler::executeCgi(const HttpRequest& request) {
+std::string	CgiHandler::executeCgi(const HttpRequest& request) {
 	std::vector<std::string> args;
 
 	if (get_extension(request.route) == "php")
@@ -73,12 +73,47 @@ void	CgiHandler::executeCgi(const HttpRequest& request) {
 
 		pid_t child = fork();
 
-		if (child == 0)
+		if (child == 0) {
+			pipes.fdRedirection(STDOUT_FILENO, WRITE);
 			execve(args[0].c_str(), arg_builder.get(), env_builder.get());
-		else
-			waitpid(child, &status, 0); // just for testing, wouldn't be block
+		}
+
+		pipes.closeWritePipe();
+		std::string response = process_response(get_fd_content(pipes.getReadPipe()));
+		waitpid(child, &status, 0); // Should stay here?
+
+		return response;
 	} catch (const PipeException& e) {
 		std::cerr << e.what() << std::cout; // not sure about this catch
 		// return ¿? shouldn't continue (STILL IN DEVELOPMENT)
 	}
+}
+
+// HTTP/1.1 200 OK\r\n
+// Content-Length: X\r\n
+
+// SCRIPT: Content-Type: text/html (e.g) \r\n
+
+// \r\n
+
+// SCRIPT:<h1>Hello World!</h1>
+
+std::string process_response(const std::string& content) {
+	size_t header_end = content.find("\r\n\r\n");
+	// may we should use find("\n\n"), it depends of Operative system
+
+	if (header_end == std::string::npos)
+		throw std::runtime_error("Invalid CGI response"); // runtime error till find appropiate exception
+
+	std::string cgi_headers = content.substr(0, header_end);
+	std::string cgi_body = content.substr(header_end + 4);
+
+	std::ostringstream oss;
+	oss << "HTTP/1.1 200 OK\r\n"
+		<< cgi_headers << "\r\n"
+		<< "Content-Length: " << cgi_body.size() << "\r\n"
+		<< "\r\n"
+		<< cgi_body;
+
+	return oss.str();
 }

@@ -22,5 +22,5 @@ class CgiHandler {
         CgiHandler(const HttpRequest& request, const std::string& full_path);
         ~CgiHandler(void);
 
-		void	executeCgi(const HttpRequest& request);
+		std::string	executeCgi(const HttpRequest& request);
 };

@@ -3,17 +3,14 @@
 
 class Pipe {
 	private:
-		enum RedirectionMode {
-			READ,
-			WRITE
-		};
-
 		int _fd[2];
 
 		Pipe(const Pipe&);
 		Pipe& operator=(const Pipe&);
 
 	public:
+		enum RedirectionMode {READ, WRITE};
+
 		Pipe(void);
 		~Pipe(void);
 

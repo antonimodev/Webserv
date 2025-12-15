@@ -1,6 +1,7 @@
-#include <iostream>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <iostream>
+#include <sstream>
 
 #include "webserv.h"
 #include "CgiHandler.hpp"
@@ -52,6 +53,27 @@ std::string CgiHandler::getHeader(const HttpRequest& request, const std::string&
 
 
 // PUBLIC
+// STATIC JUST FOR TESTING
+static std::string process_response(const std::string& content) {
+	size_t header_end = content.find("\r\n\r\n");
+	// may we should use find("\n\n"), it depends of Operative system
+
+	if (header_end == std::string::npos)
+		throw std::runtime_error("Invalid CGI response"); // runtime error till find appropiate exception
+
+	std::string cgi_headers = content.substr(0, header_end);
+	std::cout << cgi_headers << std::endl;
+	std::string cgi_body = content.substr(header_end + 4);
+
+	std::ostringstream oss;
+	oss << "HTTP/1.1 200 OK\r\n"
+		<< cgi_headers << "\r\n"
+		<< "Content-Length: " << cgi_body.size() << "\r\n"
+		<< "\r\n"
+		<< cgi_body;
+
+	return oss.str();
+}
 
 // objective: [0] /usr/bin/php-cgi [1] script.php [2] NULL
 std::string	CgiHandler::executeCgi(const HttpRequest& request) {
@@ -74,7 +96,7 @@ std::string	CgiHandler::executeCgi(const HttpRequest& request) {
 		pid_t child = fork();
 
 		if (child == 0) {
-			pipes.fdRedirection(STDOUT_FILENO, WRITE);
+			pipes.fdRedirection(STDOUT_FILENO, Pipe::WRITE);
 			execve(args[0].c_str(), arg_builder.get(), env_builder.get());
 		}
 
@@ -87,33 +109,6 @@ std::string	CgiHandler::executeCgi(const HttpRequest& request) {
 		std::cerr << e.what() << std::cout; // not sure about this catch
 		// return ¿? shouldn't continue (STILL IN DEVELOPMENT)
 	}
-}
 
-// HTTP/1.1 200 OK\r\n
-// Content-Length: X\r\n
-
-// SCRIPT: Content-Type: text/html (e.g) \r\n
-
-// \r\n
-
-// SCRIPT:<h1>Hello World!</h1>
-
-std::string process_response(const std::string& content) {
-	size_t header_end = content.find("\r\n\r\n");
-	// may we should use find("\n\n"), it depends of Operative system
-
-	if (header_end == std::string::npos)
-		throw std::runtime_error("Invalid CGI response"); // runtime error till find appropiate exception
-
-	std::string cgi_headers = content.substr(0, header_end);
-	std::string cgi_body = content.substr(header_end + 4);
-
-	std::ostringstream oss;
-	oss << "HTTP/1.1 200 OK\r\n"
-		<< cgi_headers << "\r\n"
-		<< "Content-Length: " << cgi_body.size() << "\r\n"
-		<< "\r\n"
-		<< cgi_body;
-
-	return oss.str();
+	return ""; // we may move return response right here to avoid return empty string
 }

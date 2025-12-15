@@ -50,12 +50,12 @@ void Pipe::closeWritePipe(void) {
 
 void Pipe::fdRedirection(int src, RedirectionMode mode) {
 	if (mode == READ) {
-		if (dup2(getReadPipe(), src) == -1);
+		if (dup2(getReadPipe(), src) == -1)
 			throw PipeException("Error: dup2() failed for READ");
 		closeWritePipe();
 		closeReadPipe();
 	} else if (mode == WRITE) {
-		if (dup2(getWritePipe(), src) == -1);
+		if (dup2(getWritePipe(), src) == -1)
 			throw PipeException("Error: dup2() failed for WRITE");
 		closeReadPipe();
 		closeWritePipe(); 

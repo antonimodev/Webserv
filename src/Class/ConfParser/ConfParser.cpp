@@ -26,6 +26,7 @@ ServerConfig::ServerConfig(void)
 LocationConfig::LocationConfig(void)
 	:	path(""),
 		allowed_methods(),
+		index(""),
 		root(""),
 		upload_path(""),
 		autoindex(false),
@@ -44,6 +45,7 @@ void	ConfParser::initHandlers(void) {
 
 	_locationHandlers["allowed_methods"] = &handleAllowedMethods;
 	_locationHandlers["root"] = &handleLocationRoot;
+	_locationHandlers["index"] = &handleLocationIndex;
 	_locationHandlers["upload_path"] = &handleUploadPath;
 	_locationHandlers["autoindex"] = &handleAutoindex;
 	_locationHandlers["cgi_extension"] = &handleCgiExtension;

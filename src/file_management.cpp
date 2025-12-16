@@ -73,7 +73,7 @@ std::string	get_extension(const std::string& route) {
 // --- Resource management ---
 
 
-std::string	load_resource(const std::string& full_path, const std::string& route) {
+std::string	load_resource(const std::string& full_path, const std::string& route, const std::string& index_file) {
 	struct stat info;
 
 	std::string body;
@@ -87,7 +87,7 @@ std::string	load_resource(const std::string& full_path, const std::string& route
 
 		if (!index_path.empty() && index_path[index_path.size() - 1] != '/')
 			index_path += "/";
-		index_path += "index.html";
+		index_path += index_file; // added: changed hardcoded "index.html" to the index file of the ServerConfig
 
 		if (stat(index_path.c_str(), &info) == 0) {
 			body = get_file_content(index_path);

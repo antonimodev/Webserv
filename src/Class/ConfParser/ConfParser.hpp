@@ -12,6 +12,7 @@
 struct LocationConfig {
 	std::string						path; // added
 	std::vector<std::string>        allowed_methods;
+	std::string 				   	index;
 	std::string                     root;
 	std::string                     upload_path;
 	bool                            autoindex;
@@ -54,6 +55,7 @@ void	handleErrorPage(const std::string& value, ServerConfig& config);
 // Location handlers
 void	handleAllowedMethods(const std::string& value, LocationConfig& location);
 void	handleLocationRoot(const std::string& value, LocationConfig& location);
+void	handleLocationIndex(const std::string& value, LocationConfig& location);
 void	handleUploadPath(const std::string& value, LocationConfig& location);
 void	handleAutoindex(const std::string& value, LocationConfig& location);
 void	handleCgiExtension(const std::string& value, LocationConfig& location);

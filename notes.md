@@ -179,17 +179,17 @@ YES → Does index.html exist?
 NO  → Serve file directly
 
 
-## 📋 Roadmap de Implementación
+## 🚦 Priorities (Roadmap)
 
-| Módulo    | Tarea                        | Estado         | Prioridad      |
-|-----------|------------------------------|:--------------:|:--------------:|
-| Módulo 1  | Configuration Parser         | ✅ Completo    | -              |
-| Módulo 4  | Routing con locations        | ❌ Falta       | 🔥 **ALTA**    |
-| Módulo 4  | Chunked encoding             | ❌ Falta       | 🔥 **ALTA**    |
-| Módulo 4  | Validaciones (methods, body size) | ❌ Falta  | 🟡 MEDIA       |
-| Módulo 4  | Error pages personalizadas   | ❌ Falta       | 🟡 MEDIA       |
-| Módulo 4  | Redirections                 | ❌ Falta       | 🟡 MEDIA       |
-| Módulo 4  | Integración CGI              | ⚠️ Punto de entrada | 🟡 MEDIA  |
+| Tarea             | Prioridad | Estado       |
+|------------------:|:---------:|:------------:|
+| index             | 🔥 ALTA   | ✅ Completado |
+| client_max_body_size | 🔥 ALTA | ✅ Completado |
+| error_pages       | 🟡 MEDIA  | ❌ Siguiente  |
+| autoindex         | 🟡 MEDIA  | ❌ Después    |
+| redirect          | 🟡 MEDIA  | ❌ Después    |
+| upload_path       | 🟢 BAJA   | ❌ Después    |
+| cgi_extension     | 🟢 BAJA   | ❌ Último     |
 
 ---
 

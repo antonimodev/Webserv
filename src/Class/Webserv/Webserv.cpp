@@ -138,88 +138,120 @@ void	Webserv::disconnectClient(size_t& idx) {
 }
 
 static LocationConfig* findBestLocation(const std::string& route, ServerConfig* config) {
-    std::string best_match = "";
-    LocationConfig* best_location = NULL;
-    
-    std::map<std::string, LocationConfig>::iterator it;
-    for (it = config->locations.begin(); it != config->locations.end(); ++it) {
-        const std::string& path = it->first;
-        if (route.compare(0, path.length(), path) == 0) {
-            if (path.length() > best_match.length()) {
-                best_match = path;
-                best_location = &(it->second);
-            }
-        }
-    }
-    return best_location;
+	std::string best_match = "";
+	LocationConfig* best_location = NULL;
+	
+	std::map<std::string, LocationConfig>::iterator it;
+	for (it = config->locations.begin(); it != config->locations.end(); ++it) {
+		const std::string& path = it->first;
+		if (route.compare(0, path.length(), path) == 0) {
+			if (path.length() > best_match.length()) {
+				best_match = path;
+				best_location = &(it->second);
+			}
+		}
+	}
+	return best_location;
 }
 
 static bool isMethodAllowed(const std::string& method, const std::vector<std::string>& allowed) {
-    if (allowed.empty()) // if empty, all methods are allowed
-        return true;
-    
-    return std::find(allowed.begin(), allowed.end(), method) != allowed.end();
+	if (allowed.empty()) // if empty, all methods are allowed
+		return true;
+	
+	return std::find(allowed.begin(), allowed.end(), method) != allowed.end();
 }
 
 
 // added: new changes
 void	Webserv::processClientRequest(size_t& idx) {
-	const int client_fd = _poll_vector[idx].fd;
+    const int client_fd = _poll_vector[idx].fd;
 
-	try {
-		_client_map[client_fd]._http_request = 
-			Parser::parseHttpRequest(_client_map[client_fd]._request_buffer);
+    try {
+        ClientState& client_state = _client_map[client_fd];
+        
+        // -------- 
+        client_state._http_request = 
+            Parser::parseHttpRequest(client_state._request_buffer);
 
-		const std::string& route = _client_map[client_fd]._http_request.route;
-		const std::string& method = _client_map[client_fd]._http_request.method;
-		const std::string& body = _client_map[client_fd]._http_request.body;
+        const std::string& route = client_state._http_request.route;
+        const std::string& method = client_state._http_request.method;
+        const std::string& body = client_state._http_request.body;
+        // --------
 
 
-		LocationConfig* location = findBestLocation(route, _client_map[client_fd]._server_config);
-		std::string base_path;
-		std::string remaining_path;
-	
-		if (location != NULL) {
-			if (location->root.empty()) // if this location does not have any root, we use his server root.
-				base_path = _client_map[client_fd]._server_config->root;
-			else
-				base_path = location->root;
+        // -------- validate content_lenght < client_max_body_size
+        std::map<std::string, std::string>::const_iterator content_length_it = 
+        client_state._http_request.headers.find("Content-Length");
+        
+        if (content_length_it != client_state._http_request.headers.end()) {
+            std::istringstream iss(content_length_it->second);
+            size_t content_length;
+            iss >> content_length;
+            
+            if (content_length > client_state._server_config->client_max_body_size) {
+                throw HttpCodeException(BAD_REQUEST, "Request body too large");
+            }
+        }
+        // --------
 
-			remaining_path = route.substr(location->path.length());
-		} else {
-			base_path = _client_map[client_fd]._server_config->root;
-			remaining_path = route;
-		}
+        LocationConfig* location = findBestLocation(route, client_state._server_config);
 
-		std::string full_path = base_path + remaining_path;
+        // -------- build full path with location->root or server->root
+        std::string base_path;
+        std::string remaining_path;
+    
+        if (location != NULL) {
+            if (location->root.empty())
+                base_path = client_state._server_config->root;
+            else
+                base_path = location->root;
 
-		// Ensure path separator between base_path and remaining_path
-		if (!base_path.empty() && base_path[base_path.length() - 1] != '/' && 
-		    !remaining_path.empty() && remaining_path[0] != '/') {
-			full_path = base_path + "/" + remaining_path;
-		}
+            remaining_path = route.substr(location->path.length());
+        } else {
+            base_path = client_state._server_config->root;
+            remaining_path = route;
+        }
 
-		if (location != NULL && !isMethodAllowed(method, location->allowed_methods)) {
-			throw HttpCodeException(METHOD_NOT_ALLOWED, "Method not allowed");
-		}
+        std::string full_path = base_path + remaining_path;
+        // --------
 
-		if (method == "GET")
-			_client_map[client_fd]._response_buffer = load_resource(full_path, route);
-		else if (method == "DELETE")
-			_client_map[client_fd]._response_buffer = delete_resource(full_path);
-		else if (method == "POST")
-			_client_map[client_fd]._response_buffer = save_resource(full_path, body);
 
-	} catch (const PendingRequestException& e) {
-		std::cout << "Client " << client_fd << ": " << e.what() << std::endl;
-		return;
-	} catch (const HttpCodeException& e) {
-		std::cerr << e.what() << std::endl;
-		_client_map[client_fd]._response_buffer = e.httpResponse();
-	}
+        // -------- ensure there is separator between base path and remaining path
+        if (!base_path.empty() && base_path[base_path.length() - 1] != '/' && 
+            !remaining_path.empty() && remaining_path[0] != '/') {
+            full_path = base_path + "/" + remaining_path;
+        }
+        // --------
 
-	_client_map[client_fd]._response_ready = true;
-	_poll_vector[idx].events = POLLOUT;
+        if (location != NULL && !isMethodAllowed(method, location->allowed_methods)) {
+            throw HttpCodeException(METHOD_NOT_ALLOWED, "Method not allowed");
+        }
+
+        // -------- determine index file (location->index or server->index) --------
+        std::string index_file;
+        if (location != NULL && !location->index.empty())
+            index_file = location->index;
+        else
+            index_file = client_state._server_config->index;
+        // --------
+
+        // -------- PROCESS REQUEST BY METHOD --------
+        if (method == "GET")
+            client_state._response_buffer = load_resource(full_path, route, index_file);
+        else if (method == "DELETE")
+            client_state._response_buffer = delete_resource(full_path);
+        else if (method == "POST")
+            client_state._response_buffer = save_resource(full_path, body);
+        // --------
+
+    } catch (const PendingRequestException& e) {
+        std::cout << "Client " << client_fd << ": " << e.what() << std::endl;
+        return;
+    } catch (const HttpCodeException& e) {
+    	std::cerr << e.what() << std::endl;
+		//_client_map[client_fd]._response_buffer = e.httpResponse(_client_map[client_fd]._server_config);
+    	_client_map[client_fd]._response_buffer = e.httpResponse();
+    }
 }
 
 

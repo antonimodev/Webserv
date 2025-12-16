@@ -52,6 +52,6 @@ help:
 
 t: re
 	@clear
-	./webserv ./conf/file.conf
+	./webserv ./conf/test.conf
 
 .PHONY: all clean fclean re

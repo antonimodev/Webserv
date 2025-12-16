@@ -44,5 +44,6 @@ class HttpCodeException : public std::runtime_error {
 		 * @brief Generates a complete HTTP error response.
 		 * @return HTTP response string ready to send to client.
 		 */
+		// std::string	httpResponse(const ServerConfig* config) const;
 		std::string	httpResponse(void) const;
 };

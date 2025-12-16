@@ -1,6 +1,8 @@
 #include <unistd.h>
 
 #include "Pipe.hpp"
+#include "Socket.hpp"
+
 #include "PipeException.hpp"
 
 
@@ -12,6 +14,9 @@ Pipe::Pipe(void) {
 	if (pipe(_fd) == -1) {
 		throw PipeException("Error: pipe() failed");
 	}
+
+	Socket::setNonBlocking(getReadPipe());
+	Socket::setNonBlocking(getWritePipe());
 }
 
 

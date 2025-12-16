@@ -79,6 +79,7 @@ std::string	Parser::extractQuery(const std::string& full_route) {
 
 void	Parser::parseRequestLine(const std::string& request, HttpRequest& http_struct, size_t& pos) {
 	size_t endl = request.find("\r\n", pos);
+
 	if (endl == std::string::npos)
 		throw HttpCodeException(BAD_REQUEST, "Error: malformed request line");
 
@@ -93,7 +94,7 @@ void	Parser::parseRequestLine(const std::string& request, HttpRequest& http_stru
 	if (iss >> extra)
 		throw HttpCodeException(BAD_REQUEST, "Error: malformed request line");
 
-	http_struct.route = extractRoute(full_route); 
+	http_struct.route = extractRoute(full_route);
 	http_struct.query = extractQuery(full_route);
 
 	validMethod(http_struct.method);

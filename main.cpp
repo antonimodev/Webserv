@@ -22,15 +22,3 @@ int main(int ac, char** av) {
 		return 1;
 	}
 }
-
-/* int main(int ac, char** av) {
-
-	(void)ac;
-	try {
-		ConfParser parsedFile(av[1]);
-		//parsedFile.getServers();
-	} catch ( const std::exception& e ) {
-		std::cerr << e.what() << std::endl;
-	}
-	return 0;
-} */

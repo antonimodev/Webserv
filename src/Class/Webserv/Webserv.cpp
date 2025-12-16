@@ -169,7 +169,7 @@ void	Webserv::processClientRequest(size_t& idx) {
 
 		if (isCgiRequest(full_path)) {
 			CgiHandler cgi(request, full_path);
-			_client_map[client_fd]._response_buffer = cgi.executeCgi(request);
+			_client_map[client_fd]._response_buffer = cgi.executeCgi();
 		} else
 			_client_map[client_fd]._response_buffer = handleStaticRequest(request, full_path);
 
@@ -190,7 +190,7 @@ void	Webserv::processClientRequest(size_t& idx) {
 
 
 void	Webserv::handleNewConnection(int socket_fd) {
-	sockaddr_in address;
+	struct sockaddr_in address;
 	socklen_t socklen = sizeof(address);
 	int agent = accept(socket_fd, reinterpret_cast<sockaddr*>(&address), &socklen);
 
@@ -216,6 +216,7 @@ void	Webserv::handleReceiveEvent(size_t& idx) {
 		return disconnectClient(idx);
 
 	_client_map[client_fd]._last_active = time(NULL);
+
 	buffer[bytes_read] = '\0';
 	_client_map[client_fd]._request_buffer.append(buffer);
 

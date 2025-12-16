@@ -11,7 +11,6 @@ class CgiHandler {
     private:
         std::map<std::string, std::string>  _env;
 
-
         CgiHandler(const CgiHandler&);
         CgiHandler& operator=(const CgiHandler&);
 
@@ -22,5 +21,5 @@ class CgiHandler {
         CgiHandler(const HttpRequest& request, const std::string& full_path);
         ~CgiHandler(void);
 
-		std::string	executeCgi(const HttpRequest& request);
+		std::string	executeCgi(void);
 };

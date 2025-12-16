@@ -10,6 +10,7 @@
 #include "Pipe.hpp"
 
 #include "PipeException.hpp"
+#include "HttpCodeException.hpp"
 
 
 CgiHandler::CgiHandler(const HttpRequest& request, const std::string& full_path) {
@@ -55,15 +56,18 @@ std::string CgiHandler::getHeader(const HttpRequest& request, const std::string&
 // PUBLIC
 // STATIC JUST FOR TESTING
 static std::string process_response(const std::string& content) {
-	size_t header_end = content.find("\r\n\r\n");
-	// may we should use find("\n\n"), it depends of Operative system
+	size_t	header_end = content.find("\r\n\r\n");
+	size_t	delimiter_length = 4;
 
-	if (header_end == std::string::npos)
-		throw std::runtime_error("Invalid CGI response"); // runtime error till find appropiate exception
+	if (header_end == std::string::npos) {
+		header_end = content.find("\n\n");
+		delimiter_length = 2;
+		if (header_end == std::string::npos)
+			throw HttpCodeException(INTERNAL_ERROR, "Error: Invalid CGI response");
+	}
 
 	std::string cgi_headers = content.substr(0, header_end);
-	std::cout << cgi_headers << std::endl;
-	std::string cgi_body = content.substr(header_end + 4);
+	std::string cgi_body = content.substr(header_end + delimiter_length);
 
 	std::ostringstream oss;
 	oss << "HTTP/1.1 200 OK\r\n"
@@ -76,15 +80,16 @@ static std::string process_response(const std::string& content) {
 }
 
 // objective: [0] /usr/bin/php-cgi [1] script.php [2] NULL
-std::string	CgiHandler::executeCgi(const HttpRequest& request) {
+// probably use route instead send httpRequest
+std::string	CgiHandler::executeCgi(void) {
 	std::vector<std::string> args;
 
-	if (get_extension(request.route) == "php")
+	if (get_extension(_env["PATH_INFO"]) == "php")
 		args.push_back("/usr/bin/php-cgi");
 	else
 		args.push_back("/usr/bin/python3");
 
-	args.push_back(request.route);
+	args.push_back(_env["SCRIPT_FILENAME"]);
 
 	ExecveBuilder	env_builder(_env); // receives map
 	ExecveBuilder	arg_builder(args); // receives vector

@@ -63,7 +63,7 @@ std::string	get_fd_content(int fd) {
 	
 	while ((bytes_read = read(fd, buffer, sizeof(buffer))) > 0)
 		content.append(buffer, bytes_read);
-	
+
 	if (bytes_read == -1)
 		throw HttpCodeException(INTERNAL_ERROR, "Error: failed to read from fd");
 
@@ -129,10 +129,10 @@ std::string	load_resource(const std::string& full_path, const std::string& route
 
 std::string	delete_resource(const std::string& path) {
 	struct stat info;
-	
+
 	if (stat(path.c_str(), &info) == -1)
 		throw HttpCodeException(NOT_FOUND, "Error: file " + path + " not found");
-	
+
 	if (S_ISDIR(info.st_mode))
 		throw HttpCodeException(FORBIDDEN, "Error: cannot delete directory");
 
@@ -148,17 +148,15 @@ std::string	delete_resource(const std::string& path) {
 std::string	save_resource(const std::string& full_path, const std::string& body) {
 	std::ofstream	file(full_path.c_str(), std::ios::binary);
 
-	if (!file.is_open()) {
-		if (errno == EACCES)
-			throw HttpCodeException(FORBIDDEN, "Error: not enough permissions");
-		throw HttpCodeException(INTERNAL_ERROR, "Error: cannot open file to POST");
-	}
+	if (!file.is_open())
+		throw HttpCodeException(INTERNAL_ERROR, "Error: cannot open or write file to POST");
 
 	file.write(body.data(), body.size());
 
 	if (file.fail())
 		throw HttpCodeException(INTERNAL_ERROR, "Error: failed to write file content");
 
+	// HARDCODED CONTENT-LEGTH
 	return "HTTP/1.1 201 Created\r\n"
 		"Content-Length: 0 \r\n"
 		"\r\n";

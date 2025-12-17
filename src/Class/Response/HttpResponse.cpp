@@ -2,13 +2,30 @@
 #include <stdexcept>
 #include <sstream>
 
-HttpResponse::HttpResponse() : _status_code(0), _body("") {}
+HttpResponse::HttpResponse() : _status_code(0), _body("") {
+    _messages[100] = "Continue";
+    _messages[101] = "Switching Protocols";
+    _messages[102] = "Processing";
+    _messages[200] = "OK";
+    _messages[201] = "Created";
+    _messages[204] = "No Content";
+    _messages[301] = "Moved Permanently";
+    _messages[302] = "Found";
+    _messages[304] = "Not modified";
+    _messages[400] = "Bad Request";
+    _messages[401] = "Unauthorized";
+    _messages[403] = "Forbidden";
+    _messages[404] = "Not Found";
+    _messages[429] = "Too Many Requests";
+    _messages[500] = "Internal Server Error";
+    _messages[502] = "Bad Gateway";
+    _messages[503] = "Service Unavailable";
+    _messages[504] = "Gateway Timeout";
+}
 
 HttpResponse::~HttpResponse() {}
 
 void HttpResponse::setStatus(int code) {
-	if (code < 100 || code > 504)
-		throw std::invalid_argument("Invalid HTTP status code");
 	_status_code = code;
 }
 
@@ -21,34 +38,10 @@ void HttpResponse::setBody(const std::string &body) {
 }
 
 std::string HttpResponse::getStatusMessage(int code) const {
-    static std::map<int, std::string> messages;
-    
-    if (messages.empty()) {
-
-        messages[100] = "Continue";
-        messages[101] = "Switching Protocols";
-        messages[102] = "Processing";
-
-        messages[200] = "OK";
-        messages[201] = "Created";
-        messages[204] = "No Content";
-        
-		messages[301] = "Moved Permanently";
-        messages[302] = "Found";
-        messages[304] = "Not modified";
-		
-		messages[400] = "Bad Request";
-        messages[401] = "Unauthorized";
-        messages[403] = "Forbidden";
-		messages[404] = "Not Found";
-        messages[429] = "Too Many Requests";
-
-		messages[500] = "Internal Server Error";
-        messages[502] = "Bad Gateway";
-        messages[503] = "Service Unavailable";
-		messages[504] = "Gateway Timeout";
-    }
-    return messages[code];
+    std::map<int, std::string>::const_iterator it = _messages.find(code);
+    if (it == _messages.end())
+        throw std::invalid_argument("Invalid HTTP status code");
+    return it->second;
 }
 
 std::string HttpResponse::toString() const {
@@ -61,7 +54,12 @@ std::string HttpResponse::toString() const {
 	for (std::map<std::string, std::string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it) {
     	response += it->first + ": " + it->second + "\r\n";
 	}
-    
+
+    ss.str("");
+    ss.clear();
+    ss << _body.size();
+    response += "Content-Length: " + ss.str() + "\r\n";
+
     response += "\r\n";
 
 	response += _body;

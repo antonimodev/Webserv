@@ -48,6 +48,7 @@ class Webserv {
 		std::vector<ServerConfig>	_servers;
 		std::vector<struct pollfd>	_poll_vector;
 		std::map<int, ClientState>	_client_map;
+		std::map<int, int>			_cgi_to_client;
 
 		/**
 		 * @brief Creates a pollfd struct for a socket.

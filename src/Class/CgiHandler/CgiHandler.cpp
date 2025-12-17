@@ -54,8 +54,8 @@ std::string CgiHandler::getHeader(const HttpRequest& request, const std::string&
 
 
 // PUBLIC
-// STATIC JUST FOR TESTING
-static std::string process_response(const std::string& content) {
+
+std::string process_response(const std::string& content) {
 	size_t	header_end = content.find("\r\n\r\n");
 	size_t	delimiter_length = 4;
 
@@ -107,7 +107,6 @@ int	CgiHandler::executeCgi(pid_t& pid) {
 		}
 
 		pipes.closeWritePipe();
-		waitpid(child, &status, 0); // Should stay here?
 		return pipes.fdRelease(Pipe::READ);
 
 	} catch (const PipeException& e) {

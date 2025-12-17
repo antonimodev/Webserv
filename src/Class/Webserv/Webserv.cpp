@@ -159,6 +159,17 @@ bool	Webserv::isCgiRequest(const std::string& full_path) {
 }
 
 
+void	Webserv::cleanupCgiProcess(int client_fd) {
+	close(_client_map[client_fd]._cgi_pipe_fd);
+	waitpid(_client_map[client_fd]._cgi_pid, NULL, 0);
+
+	_client_map[client_fd]._cgi_pipe_fd = -1;
+	_client_map[client_fd]._cgi_pid = -1;
+
+	_cgi_to_client.erase(_client_map[client_fd]._cgi_pipe_fd);
+}
+
+
 void	Webserv::processClientRequest(size_t& idx) { 
 	const int client_fd = _poll_vector[idx].fd;
 
@@ -170,7 +181,8 @@ void	Webserv::processClientRequest(size_t& idx) {
 
 		if (isCgiRequest(full_path)) {
 			CgiHandler cgi(request, full_path);
-			_client_map[client_fd]._cgi_pipe_fd = cgi.executeCgi(_client_map[client_fd]._cgi_pid);
+			int	pipe_fd = cgi.executeCgi(_client_map[client_fd]._cgi_pid);
+			_cgi_to_client[pipe_fd] = client_fd; // testing
 
 			addPollEvent(_client_map[client_fd]._cgi_pipe_fd, POLLIN);
 			return ; // avoid response at this point
@@ -208,6 +220,48 @@ void	Webserv::handleNewConnection(int socket_fd) {
 		_client_map[agent] = ClientState();
 		std::cout << "New client connected: " << agent << std::endl;
 	}
+}
+
+
+void	Webserv::handleCgiEvent(size_t& idx) {
+	int pipe_fd = _poll_vector[idx].fd;
+
+	if (_cgi_to_client.find(pipe_fd) == _cgi_to_client.end()) {
+		_poll_vector.erase(_poll_vector.begin() + idx);
+		--idx;
+		return;
+	}
+
+	int client_fd = _cgi_to_client[pipe_fd];
+
+	try {
+		ssize_t bytes_read = readFd(pipe_fd, _client_map[client_fd]._response_buffer, PIPE);
+
+		if (bytes_read > 0) {
+			_client_map[client_fd]._last_active = time(NULL);
+			return;
+		}
+
+		if (bytes_read == 0)
+			_client_map[client_fd]._response_buffer = process_response(_client_map[client_fd]._response_buffer);
+		else
+			throw HttpCodeException(INTERNAL_ERROR, "Error: CGI pipe can't be read");
+	} catch (const HttpCodeException& e) {
+		_client_map[client_fd]._response_buffer = e.httpResponse();
+	}
+
+	cleanupCgiProcess(client_fd);
+	_client_map[client_fd]._response_ready = true;
+
+	for (size_t i = 0; i < _poll_vector.size(); ++i) {
+		if (_poll_vector[i].fd == client_fd) {
+			_poll_vector[i].events = POLLOUT;
+			break;
+		}
+	}
+
+	_poll_vector.erase(_poll_vector.begin() + idx);
+	--idx;
 }
 
 
@@ -269,6 +323,8 @@ void	Webserv::runServer(void) {
 			if (_poll_vector[i].revents & POLLIN) {
 				if (isServerSocket(fd))
 					handleNewConnection(fd);
+				else if (_cgi_to_client.count(fd))
+					handleCgiEvent(i);
 				else
 					handleReceiveEvent(i);
 			}
@@ -276,85 +332,4 @@ void	Webserv::runServer(void) {
 				handleSendEvent(i);
 		}
 	}
-}
-
-
-// TEST
-
-
-void	Webserv::cleanupCgiProcess(int client_fd) {
-	close(_client_map[client_fd]._cgi_pipe_fd);
-	waitpid(_client_map[client_fd]._cgi_pid, NULL, 0);
-	_client_map[client_fd]._cgi_pipe_fd = -1;
-	_client_map[client_fd]._cgi_pid = -1;
-}
-
-
-void	Webserv::handleCgiEvent(size_t& idx) {
-	int pipe_fd = _poll_vector[idx].fd;
-	int client_fd = -1;
-
-	std::map<int, ClientState>::iterator it = _client_map.begin();
-	for (; it != _client_map.end(); ++it) {
-		if (it->second._cgi_pipe_fd == pipe_fd) {
-			client_fd = it->first;
-			break;
-		}
-	}
-
-	if (client_fd == -1) {
-		close(pipe_fd);
-		_poll_vector.erase(_poll_vector.begin() + idx);
-		--idx;
-		return;
-	}
-
-	try {
-		ssize_t bytes_read = readFd(pipe_fd, _client_map[client_fd]._response_buffer, PIPE);
-
-		if (bytes_read > 0) {
-			_client_map[client_fd]._last_active = time(NULL);
-			return;
-		}
-
-		if (bytes_read == 0)
-			_client_map[client_fd]._response_buffer = process_response(_client_map[client_fd]._response_buffer);
-		else
-			throw HttpCodeException(INTERNAL_ERROR, "Error: CGI pipe can't be read");
-	} catch (const HttpCodeException& e) {
-		std::cerr << e.what() << std::endl;
-		_client_map[client_fd]._response_buffer = e.httpResponse();
-	}
-
-	cleanupCgiProcess(client_fd);
-
-	_poll_vector.erase(_poll_vector.begin() + idx);
-	--idx;
-
-	for (size_t i = 0; i < _poll_vector.size(); ++i) {
-		if (_poll_vector[i].fd == client_fd) {
-			_poll_vector[i].events = POLLOUT;
-			_client_map[client_fd]._response_ready = true;
-			break;
-		}
-	}
-}
-
-enum FdType {SOCKET, PIPE}
-
-ssize_t	readFd(int fd, std::string& buffer, FdType type) {
-	char temp[4096];
-	ssize_t bytes_read = -1;
-
-	if (type == SOCKET)
-		bytes_read = recv(fd, temp, sizeof(temp) - 1, 0);
-	else
-		bytes_read = read(fd, temp, sizeof(temp) - 1);
-
-	if (bytes_read > 0) {
-		temp[bytes_read] = '\0';
-		buffer.append(temp);
-	}
-
-	return bytes_read;
 }

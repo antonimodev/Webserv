@@ -21,5 +21,6 @@ class CgiHandler {
         CgiHandler(const HttpRequest& request, const std::string& full_path);
         ~CgiHandler(void);
 
-		int	executeCgi(pid_t& pid);
+		int			executeCgi(pid_t& pid);
+		std::string	process_response(const std::string& content);
 };

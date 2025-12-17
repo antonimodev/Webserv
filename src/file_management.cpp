@@ -3,6 +3,8 @@
 #include <fstream>
 #include <sstream>
 
+#include <sys/socket.h>
+
 #include <vector>
 
 #include <dirent.h>
@@ -70,6 +72,23 @@ std::string	get_fd_content(int fd) {
 	return content;
 }
 
+
+ssize_t	readFd(int fd, std::string& buffer, FdType type) {
+	char temp[4096];
+	ssize_t bytes_read = -1;
+
+	if (type == SOCKET)
+		bytes_read = recv(fd, temp, sizeof(temp) - 1, 0);
+	else
+		bytes_read = read(fd, temp, sizeof(temp) - 1);
+
+	if (bytes_read > 0) {
+		temp[bytes_read] = '\0';
+		buffer.append(temp);
+	}
+
+	return bytes_read;
+}
 
 
 std::string	get_extension(const std::string& route) {

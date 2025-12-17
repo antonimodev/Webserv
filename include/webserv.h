@@ -16,6 +16,8 @@ namespace webserv {
 	std::string get_directory_list(const std::string& path, const std::string& route);
 }
 
+enum FdType {SOCKET, PIPE};
+
 /**
  * @brief Reads entire file contents into string.
  * @param path Path to file.
@@ -31,6 +33,8 @@ std::string get_file_content(const std::string& path);
  * @throws HttpCodeException if file cannot be opened.
  */
 std::string	get_fd_content(int fd);
+
+ssize_t	readFd(int fd, std::string& buffer, FdType type);
 
 /**
  * @brief Extracts file extension from path.

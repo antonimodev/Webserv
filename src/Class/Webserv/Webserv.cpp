@@ -155,9 +155,6 @@ static LocationConfig* findBestLocation(const std::string& route, ServerConfig* 
 }
 
 static bool isMethodAllowed(const std::string& method, const std::vector<std::string>& allowed) {
-	if (allowed.empty()) // if empty, all methods are allowed
-		return true;
-	
 	return std::find(allowed.begin(), allowed.end(), method) != allowed.end();
 }
 
@@ -192,7 +189,6 @@ void	Webserv::processClientRequest(size_t& idx) {
                 throw HttpCodeException(BAD_REQUEST, "Request body too large");
             }
         }
-        // --------
 
         LocationConfig* location = findBestLocation(route, client_state._server_config);
 
@@ -213,7 +209,6 @@ void	Webserv::processClientRequest(size_t& idx) {
         }
 
         std::string full_path = base_path + remaining_path;
-        // --------
 
 
         // -------- ensure there is separator between base path and remaining path
@@ -221,36 +216,29 @@ void	Webserv::processClientRequest(size_t& idx) {
             !remaining_path.empty() && remaining_path[0] != '/') {
             full_path = base_path + "/" + remaining_path;
         }
-        // --------
 
         if (location != NULL && !isMethodAllowed(method, location->allowed_methods)) {
             throw HttpCodeException(METHOD_NOT_ALLOWED, "Method not allowed");
         }
 
-        // -------- determine index file (location->index or server->index) --------
-        std::string index_file;
-        if (location != NULL && !location->index.empty())
-            index_file = location->index;
-        else
-            index_file = client_state._server_config->index;
-        // --------
 
-        // -------- PROCESS REQUEST BY METHOD --------
-        if (method == "GET")
+        // -------- process method requested
+        if (method == "GET") {
+			// -------- determine index file (location->index or server->index)
+			std::string index_file = (location != NULL && !location->index.empty()) ? location->index : client_state._server_config->index;
             client_state._response_buffer = load_resource(full_path, route, index_file);
+		}
         else if (method == "DELETE")
             client_state._response_buffer = delete_resource(full_path);
         else if (method == "POST")
             client_state._response_buffer = save_resource(full_path, body);
-        // --------
 
     } catch (const PendingRequestException& e) {
         std::cout << "Client " << client_fd << ": " << e.what() << std::endl;
         return;
     } catch (const HttpCodeException& e) {
     	std::cerr << e.what() << std::endl;
-		//_client_map[client_fd]._response_buffer = e.httpResponse(_client_map[client_fd]._server_config);
-    	_client_map[client_fd]._response_buffer = e.httpResponse();
+    	_client_map[client_fd]._response_buffer = e.httpResponse(_client_map[client_fd]._server_config);
     }
 }
 
@@ -315,7 +303,6 @@ void	Webserv::handleSendEvent(size_t& idx) {
 }
 
 // added
-// Returns the ServerConfig of the socket_fd ( _server_sockets[i] )
 ServerConfig* Webserv::getServerBySocketFd(int socket_fd) {
 	for (size_t i = 0; i < _server_sockets.size(); ++i) {
 		if (_server_sockets[i]->getSocketFd() == socket_fd) {

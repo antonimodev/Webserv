@@ -57,10 +57,28 @@ class Webserv {
 		void	watchPollEvents(void);
 		void	addPollEvent(int sock_fd, short event);
 
+		/**
+		 * @brief Handles a new incoming connection on the given server socket.
+		 * 
+		 * @param socket_fd The file descriptor of the server socket.
+		 */
 		void	handleNewConnection(int socket_fd);
+		/**
+		 * @brief Handles incoming data on a client socket.
+		 * 
+		 * @param idx Index in the poll vector.
+		 */
 		void	handleReceiveEvent(size_t& idx);
+		/**
+		 * @brief Handles sending data to a client socket.
+		 * 
+		 * @param idx Index in the poll vector.
+		 */
 		void	handleSendEvent(size_t& idx);
 
+		/**
+		 * @brief Checks for client inactivity and disconnects timed-out clients.
+		 */
 		void	checkTimeout(void);
 		void	resetClientInfo(int socket_fd);
 
@@ -70,10 +88,28 @@ class Webserv {
 		 * @return true if fd is a server socket.
 		 */
 		bool	isServerSocket(int fd) const;
+		/**
+		 * @brief Checks if the request should be handled by a CGI script.
+		 * 
+		 * @param request 
+		 * @param full_path 
+		 * @return true 
+		 * @return false 
+		 */
 		bool	isCgiRequest(const HttpRequest& request, const std::string& full_path);
 
 		void	disconnectClient(size_t& idx);
+		/**
+		 * @brief Processes the client's HTTP request.
+		 * 
+		 * @param idx Index in the poll vector.
+		 */
 		void	processClientRequest(size_t& idx);
+		/**
+		 * @brief Handles a static file request.
+		 * 
+		 * @param full_path The full path to the requested resource.
+		 */
 		void	handleStaticRequest(const std::string& full_path);
 
 		// Disable copy (Rule of Three - Webserv manages dynamic resources)

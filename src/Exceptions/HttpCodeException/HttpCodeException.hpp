@@ -2,6 +2,7 @@
 
 #include <stdexcept>
 #include <string>
+#include "ConfParser.hpp"
 
 /**
  * @brief HTTP status codes for error responses.
@@ -32,6 +33,13 @@ class HttpCodeException : public std::runtime_error {
 		 */
 		const char* statusToString(HttpStatus status) const;
 
+		/**
+		 * @brief Generates the HTML body for the error response.
+		 * @param config Server configuration for custom error pages.
+		 * @return HTML string for the error response body.
+		 */
+		std::string getErrorHtml(const ServerConfig* config) const;
+
 	public:
 		/**
 		 * @brief Constructs an HTTP exception.
@@ -44,6 +52,5 @@ class HttpCodeException : public std::runtime_error {
 		 * @brief Generates a complete HTTP error response.
 		 * @return HTTP response string ready to send to client.
 		 */
-		// std::string	httpResponse(const ServerConfig* config) const;
-		std::string	httpResponse(void) const;
+		std::string	httpResponse(const ServerConfig* config) const;
 };

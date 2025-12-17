@@ -24,6 +24,7 @@ namespace webserv {
 		std::string html_body = "<body><h1>Index of " + route + "</h1>\n";
 		struct dirent* directoryItem;
 
+		// -------- iterate through directory entries
 		while ((directoryItem = readdir(dir.getDirectory())) != NULL) {
 			std::string fileName = directoryItem->d_name;
 
@@ -47,7 +48,6 @@ std::string	get_file_content(const std::string& path) {
 		throw HttpCodeException(NOT_FOUND, "Error: cannot open file " + path);
 
 	std::ostringstream	msg;
-
 	msg << file.rdbuf();
 
 	std::string content = msg.str();
@@ -79,24 +79,32 @@ std::string	load_resource(const std::string& full_path, const std::string& route
 	std::string body;
 	std::string content_type;
 
+	// -------- file exists? keep info if its a directory or file
 	if (stat(full_path.c_str(), &info) != 0)
 		throw HttpCodeException(NOT_FOUND, "Error: file not found");
 
+	// -------- it's a directory? serve index or generate listing page
 	if (S_ISDIR(info.st_mode)) {
 		std::string index_path = full_path;
 
+		// --------  example: /var/www/html ->  /var/www/html/ , we need the '/' :)
 		if (!index_path.empty() && index_path[index_path.size() - 1] != '/')
 			index_path += "/";
-		index_path += index_file; // added: changed hardcoded "index.html" to the index file of the ServerConfig
 
+		// -------- example: /var/www/html/ + index.html
+		index_path += index_file;
+
+		// -------- if its a directory and has index file, serve it
 		if (stat(index_path.c_str(), &info) == 0) {
 			body = get_file_content(index_path);
 			content_type = "text/html";
 		} else {
+			// -------- no index file huh? generate directory listing...
 			body = webserv::get_directory_list(full_path, route);
 			content_type = "text/html";
 		}
 	} else {
+		// -------- it's a file, load content
 		body = get_file_content(full_path);
 		content_type = get_mime_type(get_extension(full_path));
 	}

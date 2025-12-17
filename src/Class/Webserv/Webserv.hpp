@@ -45,9 +45,9 @@ struct ClientState {
 class Webserv {
 	private:
 		std::vector<Socket*>		_server_sockets;
+		std::vector<ServerConfig>	_servers;
 		std::vector<struct pollfd>	_poll_vector;
 		std::map<int, ClientState>	_client_map;
-		std::vector<ServerConfig>	_servers;
 
 		/**
 		 * @brief Creates a pollfd struct for a socket.

@@ -213,16 +213,12 @@ void	Webserv::handleNewConnection(int socket_fd) {
 
 void	Webserv::handleReceiveEvent(size_t& idx) {
 	int client_fd = _poll_vector[idx].fd;
-	char buffer[1024];
-	ssize_t bytes_read = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
+	ssize_t bytes_read = readFd(client_fd, _client_map[client_fd]._request_buffer, SOCKET);
 
 	if (bytes_read <= 0)
 		return disconnectClient(idx);
 
 	_client_map[client_fd]._last_active = time(NULL);
-
-	buffer[bytes_read] = '\0';
-	_client_map[client_fd]._request_buffer.append(buffer);
 
 	if (_client_map[client_fd]._request_buffer.find("\r\n\r\n") != std::string::npos) {
 		processClientRequest(idx);
@@ -283,13 +279,22 @@ void	Webserv::runServer(void) {
 }
 
 
+// TEST
+
+
+void	Webserv::cleanupCgiProcess(int client_fd) {
+	close(_client_map[client_fd]._cgi_pipe_fd);
+	waitpid(_client_map[client_fd]._cgi_pid, NULL, 0);
+	_client_map[client_fd]._cgi_pipe_fd = -1;
+	_client_map[client_fd]._cgi_pid = -1;
+}
+
+
 void	Webserv::handleCgiEvent(size_t& idx) {
 	int pipe_fd = _poll_vector[idx].fd;
+	int client_fd = -1;
 
-	int	client_fd = -1;
-	
 	std::map<int, ClientState>::iterator it = _client_map.begin();
-
 	for (; it != _client_map.end(); ++it) {
 		if (it->second._cgi_pipe_fd == pipe_fd) {
 			client_fd = it->first;
@@ -301,52 +306,55 @@ void	Webserv::handleCgiEvent(size_t& idx) {
 		close(pipe_fd);
 		_poll_vector.erase(_poll_vector.begin() + idx);
 		--idx;
-		return ;
+		return;
+	}
+
+	try {
+		ssize_t bytes_read = readFd(pipe_fd, _client_map[client_fd]._response_buffer, PIPE);
+
+		if (bytes_read > 0) {
+			_client_map[client_fd]._last_active = time(NULL);
+			return;
+		}
+
+		if (bytes_read == 0)
+			_client_map[client_fd]._response_buffer = process_response(_client_map[client_fd]._response_buffer);
+		else
+			throw HttpCodeException(INTERNAL_ERROR, "Error: CGI pipe can't be read");
+	} catch (const HttpCodeException& e) {
+		std::cerr << e.what() << std::endl;
+		_client_map[client_fd]._response_buffer = e.httpResponse();
+	}
+
+	cleanupCgiProcess(client_fd);
+
+	_poll_vector.erase(_poll_vector.begin() + idx);
+	--idx;
+
+	for (size_t i = 0; i < _poll_vector.size(); ++i) {
+		if (_poll_vector[i].fd == client_fd) {
+			_poll_vector[i].events = POLLOUT;
+			_client_map[client_fd]._response_ready = true;
+			break;
+		}
 	}
 }
 
-/*
-    // read from pipe
-    char buffer[4096];
-    ssize_t bytes_read = read(pipe_fd, buffer, sizeof(buffer) - 1);
-    
-    if (bytes_read > 0) {
-        buffer[bytes_read] = '\0';
-        _client_map[client_fd]._response_buffer.append(buffer);
-    } else if (bytes_read == 0) {
-        try {
-            _client_map[client_fd]._response_buffer = process_response(_client_map[client_fd]._response_buffer);
-        } catch (const HttpCodeException& e) {
-            _client_map[client_fd]._response_buffer = e.httpResponse();
-        }
-        
-        close(pipe_fd);
-        waitpid(_client_map[client_fd]._cgi_pid, NULL, 0);
-        _client_map[client_fd]._cgi_pipe_fd = -1;
-        _client_map[client_fd]._cgi_pid = -1;
-        
-		// remove pipe from poll vector
-        _poll_vector.erase(_poll_vector.begin() + idx);
-        --idx;
-        
-        _client_map[client_fd]._response_ready = true;
-        
-        // find client pollfd and assign to pollout
-        for (size_t i = 0; i < _poll_vector.size(); ++i) {
-            if (_poll_vector[i].fd == client_fd) {
-                _poll_vector[i].events = POLLOUT;
-                break;
-            }
-        }
-    } else {
-        close(pipe_fd);
-        _poll_vector.erase(_poll_vector.begin() + idx);
-        --idx;
-        _client_map[client_fd]._response_buffer = HttpCodeException(INTERNAL_ERROR, "CGI read error").httpResponse();
-        _client_map[client_fd]._response_ready = true;
-    }
+enum FdType {SOCKET, PIPE}
+
+ssize_t	readFd(int fd, std::string& buffer, FdType type) {
+	char temp[4096];
+	ssize_t bytes_read = -1;
+
+	if (type == SOCKET)
+		bytes_read = recv(fd, temp, sizeof(temp) - 1, 0);
+	else
+		bytes_read = read(fd, temp, sizeof(temp) - 1);
+
+	if (bytes_read > 0) {
+		temp[bytes_read] = '\0';
+		buffer.append(temp);
+	}
+
+	return bytes_read;
 }
-
-
-
-*/

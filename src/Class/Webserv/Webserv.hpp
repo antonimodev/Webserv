@@ -31,7 +31,11 @@ struct ClientState {
 
 	HttpRequest	_http_request;    // Parsed HTTP request
 
-	ClientState(void) : _response_ready(false), _last_active(time(NULL)) {}
+	// CGI
+	int			_cgi_pipe_fd;
+	pid_t		_cgi_pid;
+
+	ClientState(void) : _response_ready(false), _last_active(time(NULL)), _cgi_pid(-1), _cgi_pipe_fd(-1) {}
 };
 
 
@@ -58,6 +62,7 @@ class Webserv {
 
 		void		handleNewConnection(int socket_fd);
 		void		handleReceiveEvent(size_t& idx);
+		void		handleCgiEvent(size_t& idx); // added
 		void		handleSendEvent(size_t& idx);
 
 		void		checkTimeout(void);

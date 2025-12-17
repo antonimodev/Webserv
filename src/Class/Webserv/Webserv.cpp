@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 
 #include <cstdio>
+#include <map>
 
 #include "webserv.h"
 #include "Webserv.hpp"
@@ -28,7 +29,7 @@ Webserv::Webserv(const char* conf_file) {
 	//addSocket(_servers[0].host, _servers[0].listen_port);
 
 	for (size_t i = 0; i < _servers.size(); ++i) {
-        addSocket(_servers[i].host, _servers[i].listen_port);
+		addSocket(_servers[i].host, _servers[i].listen_port);
 	}
 }
 
@@ -169,7 +170,10 @@ void	Webserv::processClientRequest(size_t& idx) {
 
 		if (isCgiRequest(full_path)) {
 			CgiHandler cgi(request, full_path);
-			_client_map[client_fd]._response_buffer = cgi.executeCgi();
+			_client_map[client_fd]._cgi_pipe_fd = cgi.executeCgi(_client_map[client_fd]._cgi_pid);
+
+			addPollEvent(_client_map[client_fd]._cgi_pipe_fd, POLLIN);
+			return ; // avoid response at this point
 		} else
 			_client_map[client_fd]._response_buffer = handleStaticRequest(request, full_path);
 
@@ -277,3 +281,72 @@ void	Webserv::runServer(void) {
 		}
 	}
 }
+
+
+void	Webserv::handleCgiEvent(size_t& idx) {
+	int pipe_fd = _poll_vector[idx].fd;
+
+	int	client_fd = -1;
+	
+	std::map<int, ClientState>::iterator it = _client_map.begin();
+
+	for (; it != _client_map.end(); ++it) {
+		if (it->second._cgi_pipe_fd == pipe_fd) {
+			client_fd = it->first;
+			break;
+		}
+	}
+
+	if (client_fd == -1) {
+		close(pipe_fd);
+		_poll_vector.erase(_poll_vector.begin() + idx);
+		--idx;
+		return ;
+	}
+}
+
+/*
+    // read from pipe
+    char buffer[4096];
+    ssize_t bytes_read = read(pipe_fd, buffer, sizeof(buffer) - 1);
+    
+    if (bytes_read > 0) {
+        buffer[bytes_read] = '\0';
+        _client_map[client_fd]._response_buffer.append(buffer);
+    } else if (bytes_read == 0) {
+        try {
+            _client_map[client_fd]._response_buffer = process_response(_client_map[client_fd]._response_buffer);
+        } catch (const HttpCodeException& e) {
+            _client_map[client_fd]._response_buffer = e.httpResponse();
+        }
+        
+        close(pipe_fd);
+        waitpid(_client_map[client_fd]._cgi_pid, NULL, 0);
+        _client_map[client_fd]._cgi_pipe_fd = -1;
+        _client_map[client_fd]._cgi_pid = -1;
+        
+		// remove pipe from poll vector
+        _poll_vector.erase(_poll_vector.begin() + idx);
+        --idx;
+        
+        _client_map[client_fd]._response_ready = true;
+        
+        // find client pollfd and assign to pollout
+        for (size_t i = 0; i < _poll_vector.size(); ++i) {
+            if (_poll_vector[i].fd == client_fd) {
+                _poll_vector[i].events = POLLOUT;
+                break;
+            }
+        }
+    } else {
+        close(pipe_fd);
+        _poll_vector.erase(_poll_vector.begin() + idx);
+        --idx;
+        _client_map[client_fd]._response_buffer = HttpCodeException(INTERNAL_ERROR, "CGI read error").httpResponse();
+        _client_map[client_fd]._response_ready = true;
+    }
+}
+
+
+
+*/

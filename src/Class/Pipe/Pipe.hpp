@@ -9,7 +9,7 @@ class Pipe {
 		Pipe& operator=(const Pipe&);
 
 	public:
-		enum RedirectionMode {READ, WRITE};
+		enum PipeMode {READ, WRITE};
 
 		Pipe(void);
 		~Pipe(void);
@@ -20,5 +20,6 @@ class Pipe {
 		void	closeReadPipe(void);
 		void	closeWritePipe(void);
 
-		void	fdRedirection(int src, RedirectionMode mode);
+		void	fdRedirection(int src, PipeMode mode);
+		int		fdRelease(PipeMode mode);
 };

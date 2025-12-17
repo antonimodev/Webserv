@@ -8,8 +8,8 @@
 
 // CONSTRUCTORS
 Pipe::Pipe(void) {
-    _fd[0] = -1;
-    _fd[1] = -1;
+	_fd[0] = -1;
+	_fd[1] = -1;
 
 	if (pipe(_fd) == -1) {
 		throw PipeException("Error: pipe() failed");
@@ -53,16 +53,32 @@ void Pipe::closeWritePipe(void) {
 }
 
 
-void Pipe::fdRedirection(int src, RedirectionMode mode) {
+void Pipe::fdRedirection(int src, PipeMode mode) {
 	if (mode == READ) {
 		if (dup2(getReadPipe(), src) == -1)
 			throw PipeException("Error: dup2() failed for READ");
-		closeWritePipe();
-		closeReadPipe();
 	} else if (mode == WRITE) {
 		if (dup2(getWritePipe(), src) == -1)
 			throw PipeException("Error: dup2() failed for WRITE");
-		closeReadPipe();
-		closeWritePipe(); 
 	}
+
+	closeWritePipe();
+	closeReadPipe();
+}
+
+int Pipe::fdRelease(PipeMode mode) {
+	int	out = -1;
+
+	switch (mode) {
+		case Pipe::READ:
+			out = getReadPipe();
+			_fd[0] = -1;
+			return out;
+
+		case Pipe::WRITE:
+			out = getWritePipe();
+			_fd[1] = -1;
+			return out;
+	}
+	return -1;
 }

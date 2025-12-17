@@ -81,7 +81,7 @@ static std::string process_response(const std::string& content) {
 
 // objective: [0] /usr/bin/php-cgi [1] script.php [2] NULL
 // probably use route instead send httpRequest
-std::string	CgiHandler::executeCgi(void) {
+int	CgiHandler::executeCgi(pid_t& pid) {
 	std::vector<std::string> args;
 
 	if (get_extension(_env["PATH_INFO"]) == "php")
@@ -99,6 +99,7 @@ std::string	CgiHandler::executeCgi(void) {
 		int status;
 
 		pid_t child = fork();
+		pid = child;
 
 		if (child == 0) {
 			pipes.fdRedirection(STDOUT_FILENO, Pipe::WRITE);
@@ -106,14 +107,11 @@ std::string	CgiHandler::executeCgi(void) {
 		}
 
 		pipes.closeWritePipe();
-		std::string response = process_response(get_fd_content(pipes.getReadPipe()));
 		waitpid(child, &status, 0); // Should stay here?
+		return pipes.fdRelease(Pipe::READ);
 
-		return response;
 	} catch (const PipeException& e) {
 		std::cerr << e.what() << std::cout; // not sure about this catch
-		// return ¿? shouldn't continue (STILL IN DEVELOPMENT)
+		return -1;
 	}
-
-	return ""; // we may move return response right here to avoid return empty string
 }

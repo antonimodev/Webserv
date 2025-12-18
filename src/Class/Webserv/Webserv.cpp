@@ -162,13 +162,17 @@ bool	Webserv::isCgiRequest(const std::string& full_path) {
 
 
 void	Webserv::cleanupCgiProcess(int client_fd) {
-	close(_client_map[client_fd]._cgi_pipe_fd);
-	waitpid(_client_map[client_fd]._cgi_pid, NULL, 0);
+	int	pipe_fd = _client_map[client_fd]._cgi_pipe_fd;
+
+	if (pipe_fd != -1) {
+		_cgi_to_client.erase(pipe_fd);
+		close(pipe_fd);
+	}
+
+	waitpid(_client_map[client_fd]._cgi_pid, NULL, WNOHANG);
 
 	_client_map[client_fd]._cgi_pipe_fd = -1;
 	_client_map[client_fd]._cgi_pid = -1;
-
-	_cgi_to_client.erase(_client_map[client_fd]._cgi_pipe_fd);
 }
 
 
@@ -228,7 +232,7 @@ void	Webserv::handleNewConnection(int socket_fd) {
 }
 
 
-void	Webserv::handleCgiEvent(size_t& idx) {
+void Webserv::handleCgiEvent(size_t& idx) {
 	int pipe_fd = _poll_vector[idx].fd;
 
 	if (_cgi_to_client.find(pipe_fd) == _cgi_to_client.end()) {
@@ -244,29 +248,44 @@ void	Webserv::handleCgiEvent(size_t& idx) {
 
 		if (bytes_read > 0) {
 			_client_map[client_fd]._last_active = time(NULL);
-			return;
+
+			return; 
 		}
 
-		if (bytes_read == 0)
+		if (bytes_read == 0) {
 			_client_map[client_fd]._response_buffer = CgiHandler::process_response(_client_map[client_fd]._response_buffer);
-		else
-			throw HttpCodeException(INTERNAL_ERROR, "Error: CGI pipe can't be read");
-	} catch (const HttpCodeException& e) {
-		_client_map[client_fd]._response_buffer = e.httpResponse();
-	}
+			
+			cleanupCgiProcess(client_fd);
+			_client_map[client_fd]._response_ready = true;
 
-	cleanupCgiProcess(client_fd);
-	_client_map[client_fd]._response_ready = true;
+			for (size_t i = 0; i < _poll_vector.size(); ++i) {
+				if (_poll_vector[i].fd == client_fd) {
+					_poll_vector[i].events = POLLOUT;
+					break;
+				}
+			}
 
-	for (size_t i = 0; i < _poll_vector.size(); ++i) {
-		if (_poll_vector[i].fd == client_fd) {
-			_poll_vector[i].events = POLLOUT;
-			break;
+			_poll_vector.erase(_poll_vector.begin() + idx);
+			--idx;
 		}
-	}
+		else
+			throw HttpCodeException(INTERNAL_ERROR, "Error: CGI pipe read error");
+	} catch (const HttpCodeException& e) {
+		std::cerr << e.what() << std::endl;
+		_client_map[client_fd]._response_buffer = e.httpResponse();
 
-	_poll_vector.erase(_poll_vector.begin() + idx);
-	--idx;
+		cleanupCgiProcess(client_fd);
+		_client_map[client_fd]._response_ready = true;
+
+		for (size_t i = 0; i < _poll_vector.size(); ++i) {
+			if (_poll_vector[i].fd == client_fd) {
+				_poll_vector[i].events = POLLOUT;
+				break;
+			}
+		}
+		_poll_vector.erase(_poll_vector.begin() + idx);
+		--idx;
+	}
 }
 
 
@@ -295,8 +314,14 @@ void	Webserv::handleSendEvent(size_t& idx) {
 		std::string& response = _client_map[client_fd]._response_buffer;
 		
 		ssize_t bytes_sent = send(client_fd, response.c_str(), response.size(), 0);
+		if (bytes_sent == -1) {
+			disconnectClient(idx);
+			return ;
+		}
 
-		if (bytes_sent >= 0) {
+		response.erase(0, bytes_sent);
+
+		if (response.empty()) {
 			resetClientInfo(client_fd);
 			_client_map[client_fd]._last_active = time(NULL);
 			_poll_vector[idx].events = POLLIN;
@@ -325,7 +350,7 @@ void	Webserv::runServer(void) {
 		for (size_t i = 0; i < _poll_vector.size(); ++i) {
 			int fd = _poll_vector[i].fd;
 
-			if (_poll_vector[i].revents & POLLIN) {
+			if (_poll_vector[i].revents & (POLLIN | POLLHUP)) {
 				if (isServerSocket(fd))
 					handleNewConnection(fd);
 				else if (_cgi_to_client.count(fd))

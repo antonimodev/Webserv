@@ -104,7 +104,7 @@ int	CgiHandler::executeCgi(pid_t& pid) {
 		if (child == 0) {
 			pipes.fdRedirection(STDOUT_FILENO, Pipe::WRITE);
 			execve(args[0].c_str(), arg_builder.get(), env_builder.get());
-			
+
 			throw CgiException("Error: execve failed in CGI child process");
 		}
 

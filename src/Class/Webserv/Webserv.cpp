@@ -8,16 +8,16 @@
 
 #include <cstdio>
 
-#include "webserv.h"
+#include "../../../include/webserv.h"
 #include "Webserv.hpp"
-#include "Socket.hpp"
-#include "CgiHandler.hpp"
-#include "ConfParser.hpp"
+#include "../Socket/Socket.hpp"
+#include "../CgiHandler/CgiHandler.hpp"
+#include "../ConfParser/ConfParser.hpp"
 
-#include "PollException.hpp"
-#include "HttpCodeException.hpp"
-#include "SocketException.hpp"
-#include "PendingRequestException.hpp"
+#include "../../Exceptions/PollException.hpp"
+#include "../../Exceptions/HttpCodeException/HttpCodeException.hpp"
+#include "../../Exceptions/SocketException.hpp"
+#include "../../Exceptions/PendingRequestException.hpp"
 
 
 Webserv::Webserv(const char* conf_file) {
@@ -136,14 +136,28 @@ void	Webserv::disconnectClient(size_t& idx) {
 }
 
 
-std::string	Webserv::handleStaticRequest(const HttpRequest& request, const std::string& full_path) {
+std::string Webserv::handleStaticRequest(const HttpRequest& request, const std::string& full_path) {
 	if (request.method == "GET")
 		return load_resource(full_path, request.route);
 	else if (request.method == "DELETE")
 		return delete_resource(full_path);
-	else if (request.method == "POST")
-		return save_resource(full_path, request.body);
-
+	else if (request.method == "POST") {
+		// Si es multipart/form-data, parsear y guardar cada archivo
+		if (!request.multipart_boundary.empty()) {
+			std::vector<UploadedFile> files = Parser::parseMultipartFormData(request.body, request.multipart_boundary);
+			std::string response;
+			for (size_t i = 0; i < files.size(); ++i) {
+				std::string upload_path = "./uploads/" + files[i].filename; // Cambia la ruta según tu config
+				response += save_resource(upload_path, files[i].content);
+			}
+			if (files.empty())
+				return "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\n\r\n";
+			return response;
+		} else {
+			// POST normal (no multipart)
+			return save_resource(full_path, request.body);
+		}
+	}
 	return "";
 }
 

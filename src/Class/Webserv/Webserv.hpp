@@ -12,11 +12,10 @@
 
 #include <ctime> // time_t
 
-#include "webserv.h"
-#include "Parser.hpp"
-#include "Socket.hpp"
-
-#include "ConfParser.hpp"
+#include "../../../include/webserv.h"
+#include "../Parser/Parser.hpp"
+#include "../Socket/Socket.hpp"
+#include "../ConfParser/ConfParser.hpp"
 
 
 /**

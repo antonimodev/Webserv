@@ -19,11 +19,32 @@ struct HttpRequest {
 
 	// BODY (Content to POST (images, text...))
 	std::string body;
+
+	// Boundary para multipart/form-data (si aplica)
+	std::string multipart_boundary;
 };
 
 
 class Parser {
-	private:
+   public:
+	   /**
+		* @struct UploadedFile
+		* @brief Representa un archivo subido por multipart/form-data.
+		*/
+	   struct UploadedFile {
+		   std::string filename;
+		   std::string content;
+	   };
+
+	   /**
+		* @brief Parsea el body multipart/form-data y extrae archivos subidos.
+		* @param body El body completo de la petición.
+		* @param boundary El boundary extraído del header.
+		* @return Vector de archivos subidos.
+		*/
+	   static std::vector<UploadedFile> parseMultipartFormData(const std::string& body, const std::string& boundary);
+
+   private:
 		Parser(void);
 		Parser(const Parser&);
 		Parser& operator=(const Parser&);
@@ -65,6 +86,12 @@ class Parser {
 		static void	parseBody(const std::string& request, HttpRequest& http_struct, size_t pos);
 
 	public:
+	/**
+	 * @brief Detecta si Content-Type es multipart/form-data y extrae el boundary.
+	 * @param http_struct Estructura HttpRequest con headers ya parseados.
+	 * @return boundary si existe, string vacío si no es multipart.
+	 */
+	static std::string extractMultipartBoundary(const HttpRequest& http_struct);
 		/**
 		 * @brief Parses a raw HTTP request string into HttpRequest struct.
 		 * @param request Raw HTTP request as received from client.

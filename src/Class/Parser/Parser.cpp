@@ -2,10 +2,10 @@
 #include <sstream>
 
 #include "Parser.hpp"
-#include "webserv.h"
+#include "../../../include/webserv.h"
 
-#include "HttpCodeException.hpp"
-#include "PendingRequestException.hpp"
+#include "../../Exceptions/HttpCodeException/HttpCodeException.hpp"
+#include "../../Exceptions/PendingRequestException.hpp"
 
 
 Parser::Parser(void) {}
@@ -167,7 +167,12 @@ HttpRequest Parser::parseHttpRequest(const std::string& request) {
 
 	parseRequestLine(request, http_struct, pos);
 	parseHeaders(request, http_struct, pos);
+
+	// Extraer y guardar boundary si es multipart/form-data
+	http_struct.multipart_boundary = extractMultipartBoundary(http_struct);
+
 	parseBody(request, http_struct, pos);
+
 
 	return http_struct;
 }
@@ -185,4 +190,118 @@ const std::string	get_mime_type(const std::string& extension) {
 	if (extension == "txt")  return "text/plain";
 
 	return "text/html";
+}
+
+// Detecta si Content-Type es multipart/form-data y extrae el boundary
+std::string Parser::extractMultipartBoundary(const HttpRequest& http_struct) {
+    // Busca el header "Content-Type" en el mapa de headers.
+    std::map<std::string, std::string>::const_iterator it = http_struct.headers.find("Content-Type");
+    if (it == http_struct.headers.end())
+        return ""; // Si no existe, no es multipart.
+
+    // Obtiene el valor del header Content-Type.
+    const std::string& content_type = it->second;
+
+    // Define el prefijo que buscamos: "multipart/form-data;"
+    std::string prefix = "multipart/form-data;";
+    size_t pos = content_type.find(prefix);
+    if (pos == std::string::npos)
+        return ""; // Si no está el prefijo, no es multipart.
+
+    // Busca la subcadena "boundary=" después del prefijo.
+    size_t boundary_pos = content_type.find("boundary=", pos + prefix.length());
+    if (boundary_pos == std::string::npos)
+        return ""; // Si no está boundary=, no es válido.
+
+    boundary_pos += 9; // Avanza 9 caracteres para saltar "boundary=".
+
+    // Busca el final del boundary (puede estar seguido de ';' o ser el final del string).
+    size_t end = content_type.find(';', boundary_pos);
+
+    // Extrae el boundary desde boundary_pos hasta end.
+    std::string boundary = content_type.substr(boundary_pos, end - boundary_pos);
+
+    // Elimina espacios o comillas al principio.
+    while (!boundary.empty() && (boundary[0] == ' ' || boundary[0] == '\"'))
+        boundary.erase(0, 1);
+
+    // Elimina espacios o comillas al final.
+    while (!boundary.empty() && (boundary[boundary.size()-1] == ' ' || boundary[boundary.size()-1] == '\"'))
+        boundary.erase(boundary.size()-1, 1);
+
+    // Devuelve el boundary limpio.
+    return boundary;
+}
+
+// Parsea el body multipart/form-data y extrae archivos subidos
+std::vector<Parser::UploadedFile> Parser::parseMultipartFormData(const std::string& body, const std::string& boundary) {
+    std::vector<Parser::UploadedFile> files;
+	if (boundary.empty())
+		return files;
+
+	std::string delim = "--" + boundary;
+	std::string end_delim = delim + "--";
+	size_t pos = 0;
+
+	while (true) {
+		// Buscar el inicio de la siguiente parte
+		size_t part_start = body.find(delim, pos);
+
+		if (part_start == std::string::npos)
+			break;
+		
+		part_start += delim.length();
+		if (body.compare(part_start, 2, "--") == 0)
+			break; // Es el final
+		
+		// Saltar CRLF
+		if (body.compare(part_start, 2, "\r\n") == 0)
+			part_start += 2;
+
+		// Buscar el final de los headers de la parte
+		size_t headers_end = body.find("\r\n\r\n", part_start);
+		if (headers_end == std::string::npos)
+			break;
+		
+		std::string part_headers = body.substr(part_start, headers_end - part_start);
+
+		// Buscar Content-Disposition y filename
+		size_t disp_pos = part_headers.find("Content-Disposition:");
+
+		if (disp_pos == std::string::npos) {
+			pos = headers_end + 4;
+			continue;
+		}
+
+		size_t filename_pos = part_headers.find("filename=", disp_pos);
+		
+		if (filename_pos == std::string::npos) {
+			pos = headers_end + 4;
+			continue; // No es archivo
+		}
+
+		filename_pos += 9; // Saltar 'filename='
+		char quote = part_headers[filename_pos];
+		size_t filename_end = part_headers.find(quote, filename_pos + 1);
+		std::string filename = part_headers.substr(filename_pos + 1, filename_end - filename_pos - 1);
+
+		// El contenido empieza después de los headers y CRLFCRLF
+		size_t content_start = headers_end + 4;
+		// Buscar el siguiente boundary
+		size_t content_end = body.find(delim, content_start);
+		if (content_end == std::string::npos)
+			break;
+		// Eliminar el CRLF final si existe
+		if (content_end > 1 && body[content_end - 2] == '\r' && body[content_end - 1] == '\n')
+			content_end -= 2;
+		std::string file_content = body.substr(content_start, content_end - content_start);
+
+		UploadedFile file;
+		file.filename = filename;
+		file.content = file_content;
+		files.push_back(file);
+
+		pos = content_end;
+	}
+	return files;
 }

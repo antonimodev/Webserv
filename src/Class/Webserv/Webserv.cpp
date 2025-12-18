@@ -4,7 +4,9 @@
 #include <iostream>
 #include <unistd.h>
 
+#include <sys/wait.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 
 #include <cstdio>
 #include <map>
@@ -181,13 +183,16 @@ void	Webserv::processClientRequest(size_t& idx) {
 
 		if (isCgiRequest(full_path)) {
 			CgiHandler cgi(request, full_path);
-			int	pipe_fd = cgi.executeCgi(_client_map[client_fd]._cgi_pid);
-			_cgi_to_client[pipe_fd] = client_fd; // testing
 
-			addPollEvent(_client_map[client_fd]._cgi_pipe_fd, POLLIN);
+			int	pipe_fd = cgi.executeCgi(_client_map[client_fd]._cgi_pid);
+			_client_map[client_fd]._cgi_pipe_fd = pipe_fd;
+
+			_cgi_to_client[pipe_fd] = client_fd; // testing
+			addPollEvent(pipe_fd, POLLIN);
 			return ; // avoid response at this point
-		} else
-			_client_map[client_fd]._response_buffer = handleStaticRequest(request, full_path);
+		}
+
+		_client_map[client_fd]._response_buffer = handleStaticRequest(request, full_path);
 
 	} catch (const PendingRequestException& e) {
 		std::cout << "Client " << client_fd << ": " << e.what() << std::endl;
@@ -243,7 +248,7 @@ void	Webserv::handleCgiEvent(size_t& idx) {
 		}
 
 		if (bytes_read == 0)
-			_client_map[client_fd]._response_buffer = process_response(_client_map[client_fd]._response_buffer);
+			_client_map[client_fd]._response_buffer = CgiHandler::process_response(_client_map[client_fd]._response_buffer);
 		else
 			throw HttpCodeException(INTERNAL_ERROR, "Error: CGI pipe can't be read");
 	} catch (const HttpCodeException& e) {

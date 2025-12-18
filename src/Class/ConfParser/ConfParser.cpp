@@ -183,12 +183,12 @@ void	ConfParser::parseToken(const std::string& token, const std::vector<std::str
 	if (token == "location" && !_brackets.empty()) {
 		if (i + 1 >= content.size())
 			throw ParseException("Error: 'location' without path");
-		
+
 		std::string path = content[i + 1];
 
 		if (_servers.back().locations.find(path) != _servers.back().locations.end())
 			throw ParseException("Duplicate location block: " + path);
-		
+
 		_servers.back().locations[path] = LocationConfig();
 		_current_location_path = path;
 		++i;

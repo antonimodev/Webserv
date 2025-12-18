@@ -9,6 +9,7 @@
 #include "Parser.hpp"
 #include "Pipe.hpp"
 
+#include "CgiException.hpp"
 #include "PipeException.hpp"
 #include "HttpCodeException.hpp"
 
@@ -55,7 +56,7 @@ std::string CgiHandler::getHeader(const HttpRequest& request, const std::string&
 
 // PUBLIC
 
-std::string process_response(const std::string& content) {
+std::string CgiHandler::process_response(const std::string& content) {
 	size_t	header_end = content.find("\r\n\r\n");
 	size_t	delimiter_length = 4;
 
@@ -96,7 +97,6 @@ int	CgiHandler::executeCgi(pid_t& pid) {
 	
 	try {
 		Pipe pipes;
-		int status;
 
 		pid_t child = fork();
 		pid = child;
@@ -104,6 +104,8 @@ int	CgiHandler::executeCgi(pid_t& pid) {
 		if (child == 0) {
 			pipes.fdRedirection(STDOUT_FILENO, Pipe::WRITE);
 			execve(args[0].c_str(), arg_builder.get(), env_builder.get());
+			
+			throw CgiException("Error: execve failed in CGI child process");
 		}
 
 		pipes.closeWritePipe();

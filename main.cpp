@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include "CgiException.hpp"
 #include "SocketException.hpp"
 #include "PollException.hpp"
 
@@ -17,7 +18,10 @@ int main(int ac, char** av) {
 	try {
 		Webserv webserv(av[1]);
 		webserv.runServer();
-	} catch ( const SocketException& e ) {
+	} catch (const SocketException& e) {
+		std::cerr << e.what() << std::endl;
+		return 1;
+	} catch (const CgiException& e) {
 		std::cerr << e.what() << std::endl;
 		return 1;
 	}

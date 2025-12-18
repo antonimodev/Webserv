@@ -10,13 +10,13 @@
  * @brief Configuration for a location block
  */
 struct LocationConfig {
-	std::vector<std::string>        allowed_methods;
-	std::string                     root;
-	std::string                     upload_path;
-	bool                            autoindex;
-	std::pair<std::string, std::string> cgi_extension;
-	std::pair<int, std::string>     redirect;
-	
+	std::vector<std::string>			allowed_methods;
+	std::string							root;
+	std::string							upload_path;
+	bool								autoindex;
+	std::pair<std::string, std::string>	cgi_extension;
+	std::pair<int, std::string>			redirect;
+
 	LocationConfig(void);
 };
 
@@ -24,22 +24,22 @@ struct LocationConfig {
  * @brief Configuration for a server block
  */
 struct ServerConfig {
-	std::string                     server_name;
-	int                             listen_port;
-	std::string                     host;
-	std::string                     root;
-	std::string                     index;
-	size_t                          client_max_body_size;
-	std::map<int, std::string>      error_pages;
-	std::map<std::string, LocationConfig> locations;
+	std::string								server_name;
+	int										listen_port;
+	std::string								host;
+	std::string								root;
+	std::string								index;
+	size_t									client_max_body_size;
+	std::map<int, std::string>				error_pages;
+	std::map<std::string, LocationConfig>	locations;
 
 	ServerConfig(void);
 };
 
 
-// ════════════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════
 // HELPER FUNCTIONS (handlers doesn't need object state)
-// ════════════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════
 
 // Server handlers
 void	handleServerName(const std::string& value, ServerConfig& config);
@@ -66,23 +66,23 @@ std::vector<std::string> tokenizeContent(const std::string& buffer);
  */
 class ConfParser {
 	private:
-		std::stack<std::string>     _brackets;
-		std::vector<ServerConfig>   _servers;
-		std::string                 _current_location_path;
+		std::stack<std::string>		_brackets;
+		std::vector<ServerConfig>	_servers;
+		std::string					_current_location_path;
 
 		// Typedefs for handlers (now points to helper functions)
 		typedef void	(*ServerHandler)(const std::string&, ServerConfig&);
 		typedef void	(*LocationHandler)(const std::string&, LocationConfig&);
 
 		// Maps for handlers
-		std::map<std::string, ServerHandler>   _serverHandlers;
-		std::map<std::string, LocationHandler> _locationHandlers;
+		std::map<std::string, ServerHandler>	_serverHandlers;
+		std::map<std::string, LocationHandler>	_locationHandlers;
 		
-		void	initHandlers(void);
-		std::vector<std::string> tokenizeContent(const std::string& buffer);
-		void	parseToken(const std::string& token, const std::vector<std::string>& content, size_t& i);
-		void	saveToken(std::string token, const std::vector<std::string>& content, size_t& i);
-		void	validateServers(void);
+		void						initHandlers(void);
+		std::vector<std::string>	tokenizeContent(const std::string& buffer);
+		void						parseToken(const std::string& token, const std::vector<std::string>& content, size_t& i);
+		void						saveToken(std::string token, const std::vector<std::string>& content, size_t& i);
+		void						validateServers(void);
 
 
 	public:
@@ -93,8 +93,8 @@ class ConfParser {
 		ConfParser(const ConfParser& other);
 		ConfParser& operator=(const ConfParser& other);
 
-		void	parseFile(const char* fileName);
-		const std::vector<ServerConfig>& getServers(void) const;
+		void								parseFile(const char* fileName);
+		const std::vector<ServerConfig>&	getServers(void) const;
 
 		void	printServers(void);
 };

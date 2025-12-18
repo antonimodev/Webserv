@@ -32,8 +32,8 @@ struct ClientState {
 	HttpRequest	_http_request;    // Parsed HTTP request
 
 	// CGI
-	int			_cgi_pipe_fd;
 	pid_t		_cgi_pid;
+	int			_cgi_pipe_fd;
 
 	ClientState(void) : _response_ready(false), _last_active(time(NULL)), _cgi_pid(-1), _cgi_pipe_fd(-1) {}
 };
@@ -76,6 +76,8 @@ class Webserv {
 		 */
 		bool		isServerSocket(int fd) const;
 		bool		isCgiRequest(const std::string& full_path);
+
+		void		cleanupCgiProcess(int client_fd);
 
 		void		disconnectClient(size_t& idx);
 		void		processClientRequest(size_t& idx);

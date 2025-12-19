@@ -98,6 +98,9 @@ void	handleAllowedMethods(const std::string& value, LocationConfig& location) {
         throw ParseException("allowed_methods cannot be empty");
 }
 
+void	handleLocationIndex(const std::string& value, LocationConfig& location) {
+	location.index = value;
+}
 
 void	handleLocationRoot(const std::string& value, LocationConfig& location) {
     location.root = value;

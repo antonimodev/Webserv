@@ -3,6 +3,8 @@ commits.txt
 .vscode
 obj
 
+test_www
+
 # EXECUTABLE
 a.out
 webserv

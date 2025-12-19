@@ -179,6 +179,37 @@ YES → Does index.html exist?
 NO  → Serve file directly
 
 
+## 🚦 Priorities (Roadmap)
+
+| Task                | Priority  | Status        |
+|--------------------:|:---------:|:------------:|
+| index               | 🔥 HIGH   | ✅ Completed  |
+| client_max_body_size| 🔥 HIGH   | ✅ Completed  |
+| error_pages         | 🟡 MEDIUM | ❌ Next       |
+| autoindex           | 🟡 MEDIUM | ❌ Later      |
+| redirect            | 🟡 MEDIUM | ❌ Later      |
+| upload_path         | 🟢 LOW    | ❌ Later      |
+| cgi_extension       | 🟢 LOW    | ❌ Last       |
+
+---
+
+### 🎯 **Action Plan**
+
+1. **Routing**  
+   _Without this, the configuration you parsed is not used. This is your critical responsibility._
+
+2. **Chunked encoding**  
+   _Necessary for large requests (uploads) and part of the subject._
+
+3. **Validations**  
+   _Allowed methods, body size, apply error pages._
+
+4. **Redirections**  
+   _Return 301/302 according to configuration._
+
+---
+
+
 # GITHUB COMMANDS
 
 ## Branch
@@ -206,3 +237,17 @@ git checkout main                # Switch to target branch
 git merge branch-name            # Merge branch into current
 git push                         # Push merged changes
 ```
+
+---
+
+# Todos
+
+- If location inside server Location is an image instead html, shows strange symbols
+
+- If location does not exist, throws 404 not found, but... is early throw?
+
+- Location->root (?)
+
+- load_resource() -> Index_file (?)
+
+- Check possible redundancies in HttpCodeException for every error code (404, 500, ...)

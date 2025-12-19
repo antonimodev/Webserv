@@ -71,7 +71,7 @@ std::string save_resource(const std::string& full_path, const std::string& body)
  * @return HTTP 200 response with content.
  * @throws HttpCodeException on error.
  */
-std::string load_resource(const std::string& full_path, const std::string& route);
+std::string load_resource(const std::string& full_path, const std::string& route,  const std::string& index_file);
 
 /**
  * @brief Deletes a file (DELETE handler).

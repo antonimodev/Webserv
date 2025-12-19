@@ -15,7 +15,6 @@
 #include "webserv.h"
 #include "Parser.hpp"
 #include "Socket.hpp"
-
 #include "ConfParser.hpp"
 
 
@@ -23,13 +22,15 @@
  * @brief Holds the state of a connected client.
  */
 struct ClientState {
+	ServerConfig* _server_config; // added: pointer to the server the client came from
+
+	HttpRequest	_http_request;    // Parsed HTTP request
+
 	std::string	_request_buffer;  // Stores the incoming request piece by piece
 	std::string	_response_buffer; // Stores the final response to be sent
 	bool		_response_ready;  // Flag: true when ready to send
 
 	time_t		_last_active;     // Last activity timestamp
-
-	HttpRequest	_http_request;    // Parsed HTTP request
 
 	// CGI
 	pid_t		_cgi_pid;
@@ -81,14 +82,19 @@ class Webserv {
 
 		void		disconnectClient(size_t& idx);
 		void		processClientRequest(size_t& idx);
-		std::string	handleStaticRequest(const HttpRequest& request, const std::string& full_path);
+		void		setPollEvent(int fd, short event);
 
 		// Disable copy (Rule of Three - Webserv manages dynamic resources)
 		Webserv(const Webserv&);
 		Webserv& operator=(const Webserv&);
 
+		// added
+		ServerConfig* getServerBySocketFd(int socket_fd);
+
 	public:
-		Webserv(const char* conf_file);
+		Webserv(void);
+		Webserv(const char* av);
+		Webserv& operator=(Webserv& other);
 		~Webserv(void);
 
 		void	runServer(void);

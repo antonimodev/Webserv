@@ -23,8 +23,22 @@ ServerConfig::ServerConfig(void)
 		locations()
 {}
 
+// --------- needed for locations map in ServerConfig thanks to c++98 standards.
 LocationConfig::LocationConfig(void)
-	:	allowed_methods(),
+	:	path(""),
+		allowed_methods(),
+		index(""),
+		root(""),
+		upload_path(""),
+		autoindex(false),
+		cgi_extension(std::make_pair("", "")),
+		redirect(std::make_pair(0, ""))
+{}
+
+LocationConfig::LocationConfig(std::string path)
+	:	path(path),
+		allowed_methods(),
+		index(""),
 		root(""),
 		upload_path(""),
 		autoindex(false),
@@ -43,6 +57,7 @@ void	ConfParser::initHandlers(void) {
 
 	_locationHandlers["allowed_methods"] = &handleAllowedMethods;
 	_locationHandlers["root"] = &handleLocationRoot;
+	_locationHandlers["index"] = &handleLocationIndex;
 	_locationHandlers["upload_path"] = &handleUploadPath;
 	_locationHandlers["autoindex"] = &handleAutoindex;
 	_locationHandlers["cgi_extension"] = &handleCgiExtension;
@@ -90,6 +105,7 @@ std::vector<std::string> ConfParser::tokenizeContent(const std::string& buffer) 
 	std::vector<std::string> tokenizedBuffer;
 	std::string line;
 
+	// -------- Tokenize line by line, ignoring comments
 	while (std::getline(ss, line)) {
 		size_t commentPos = line.find('#');
 		
@@ -181,15 +197,19 @@ void	ConfParser::parseToken(const std::string& token, const std::vector<std::str
 	}
 
 	if (token == "location" && !_brackets.empty()) {
+		// -------- example: location EOF, exception
 		if (i + 1 >= content.size())
 			throw ParseException("Error: 'location' without path");
 
 		std::string path = content[i + 1];
 
+		// -------- if we find one previous location with same path, exception.
 		if (_servers.back().locations.find(path) != _servers.back().locations.end())
 			throw ParseException("Duplicate location block: " + path);
-
-		_servers.back().locations[path] = LocationConfig();
+		
+		_servers.back().locations[path] = LocationConfig(path);
+		
+		// -------- set current location path for context
 		_current_location_path = path;
 		++i;
 		return;
@@ -201,16 +221,20 @@ void	ConfParser::parseToken(const std::string& token, const std::vector<std::str
 	}
 
 	if (token == "}") {
+		// -------- we need at least one opening bracket to match
 		if (_brackets.empty())
 			throw ParseException("Unmatched closing bracket");
+		
 		_brackets.pop();
 
+		// -------- clear current location if we close a location block
 		if (_brackets.size() == 1)
 			_current_location_path.clear();
 		
 		return;
 	}
 
+	// -------- if we reach here, we expect a directive, so there must be an open bracket
 	if (_brackets.empty())
 		throw ParseException("Unexpected token: " + token);
 
@@ -225,21 +249,21 @@ void	ConfParser::validateServers(void) {
 		if (_servers[i].listen_port == 0)
 			throw ParseException("Server must have 'listen' directive");
 
-		if (_servers[i].listen_port < 1 || _servers[i].listen_port > 65535)
-			throw ParseException("Invalid port number (must be 1-65535)");
-
-		if (_servers[i].host.empty())
-			throw ParseException("Server must have 'host' directive");
-
-		// IP format validation
-		if (_servers[i].host.find_first_not_of("0123456789.") != std::string::npos)
-			throw ParseException("Invalid host format: " + _servers[i].host);
-
 		if (_servers[i].root.empty())
 			_servers[i].root = "./static";
 
 		if (_servers[i].index.empty())
 			_servers[i].index = "index.html";
+
+		// --------- simple host validation (only digits and dots)
+		if (_servers[i].host.empty())
+			throw ParseException("Server must have 'host' directive");
+
+		if (_servers[i].host.find_first_not_of("0123456789.") != std::string::npos)
+			throw ParseException("Invalid host format: " + _servers[i].host);
+
+		if (_servers[i].listen_port < 1 || _servers[i].listen_port > 65535)
+			throw ParseException("Invalid port number (must be 1-65535)");
 
 		// Location must have at least 1 method
 		std::map<std::string, LocationConfig>::iterator it;
@@ -276,8 +300,8 @@ const std::vector<ServerConfig>& ConfParser::getServers() const {
     return _servers;
 }
 
-/*
-void	ConfParser::printServers(void) {
+
+/* void	ConfParser::printServers(void) {
 	const std::string colorServerName = "\033[1;35m"; // Magenta
 	const std::string colorKey = "\033[1;34m";        // Blue
 	const std::string colorValue = "\033[1;32m";      // Green
@@ -313,5 +337,5 @@ void	ConfParser::printServers(void) {
 		}
 		std::cout << std::endl;
 	}
-}
-	*/
+} */
+	

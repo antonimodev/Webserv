@@ -298,12 +298,8 @@ void	Webserv::handleReceiveEvent(size_t& idx) {
 
 	_client_map[client_fd]._last_active = time(NULL);
 
-	if (_client_map[client_fd]._request_buffer.find("\r\n\r\n") != std::string::npos) {
+	if (_client_map[client_fd]._request_buffer.find("\r\n\r\n") != std::string::npos)
 		processClientRequest(idx);
-
-		_client_map[client_fd]._response_ready = true;
-		_poll_vector[idx].events = POLLOUT;
-	}
 }
 
 

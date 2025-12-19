@@ -161,8 +161,9 @@ void	Webserv::cleanupCgiProcess(int client_fd) {
 void	Webserv::checkTimeout(void) {
 	time_t current_time = time(NULL);
 
-	for (size_t i = 0; i < _poll_vector.size(); ++i) {
-		int fd = _poll_vector[i].fd;
+	for (size_t i = _poll_vector.size(); i > 0; --i) {
+		size_t idx = i - 1;
+		int fd = _poll_vector[idx].fd;
 
 		// Skip server sockets and CGI pipes
 		if (isServerSocket(fd) || _cgi_to_client.count(fd))
@@ -174,8 +175,7 @@ void	Webserv::checkTimeout(void) {
 		if ((current_time - _client_map[fd]._last_active) > 30) {
 			close(fd);
 			_client_map.erase(fd);
-			_poll_vector.erase(_poll_vector.begin() + i);
-			--i;
+			_poll_vector.erase(_poll_vector.begin() + static_cast<long>(idx));
 			std::cout << "Client " << fd << " disconnected due to inactivity" << std::endl;
 		}
 	}
@@ -194,7 +194,7 @@ static LocationConfig* findLocation(const std::string& route, ServerConfig* conf
 
 	for (; it != config->locations.end(); ++it) {
 		const std::string& path = it->first;
-		std::cout << path << std::endl;
+
 		if (route.compare(0, path.length(), path) == 0) {
 			if (path.length() > match.length()) {
 				match = path;
@@ -358,6 +358,15 @@ void	Webserv::handleCgiEvent(size_t& idx) {
 	}
 
 	int client_fd = _cgi_to_client[pipe_fd];
+
+	if (_client_map.find(client_fd) == _client_map.end()) {
+		_cgi_to_client.erase(pipe_fd);
+		close(pipe_fd);
+		_poll_vector.erase(_poll_vector.begin() + idx);
+		--idx;
+		return;
+	}
+
 	ClientState& client = _client_map[client_fd];
 
 	try {

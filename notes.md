@@ -251,3 +251,5 @@ git push                         # Push merged changes
 - load_resource() -> Index_file (?)
 
 - Check possible redundancies in HttpCodeException for every error code (404, 500, ...)
+
+- May implement a "volatile bool" variable to replace while(true)

@@ -140,6 +140,9 @@ void	Parser::parseHeaders(const std::string& request, HttpRequest& http_struct, 
 void	Parser::parseBody(const std::string& request, HttpRequest& http_struct, size_t pos) {
 	std::map<std::string, std::string>::const_iterator it = http_struct.headers.find("Content-Length");
 
+	// -------- look if Transfer-Encoding is chunked for the current client
+
+
 	if (it == http_struct.headers.end()) {
 		return; // No body expected
 	}

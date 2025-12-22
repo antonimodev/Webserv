@@ -256,11 +256,11 @@ static std::string handleStaticRequest(const HttpRequest& request, LocationConfi
 
 	if (method == "GET") {
 		std::string index_file = getIndexFile(location, config);
-		return load_resource(full_path, request.route, index_file);
+		return load_resource(full_path, request.route, location->autoindex, index_file);
 	}
 	else if (method == "POST")
 		return save_resource(full_path, request.body);
-	else if (method == "DELETE")
+	else
 		return delete_resource(full_path);
 
 	// This should never happen due to validation, but just in case

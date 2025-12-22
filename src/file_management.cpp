@@ -108,7 +108,7 @@ std::string	get_extension(const std::string& route) {
 // --- Resource management ---
 
 
-std::string	load_resource(const std::string& full_path, const std::string& route, const std::string& index_file) {
+std::string	load_resource(const std::string& full_path, const std::string& route, bool autoindex, const std::string& index_file) {
 	struct stat info;
 
 	std::string body;
@@ -133,11 +133,12 @@ std::string	load_resource(const std::string& full_path, const std::string& route
 		if (stat(index_path.c_str(), &info) == 0) {
 			body = get_file_content(index_path);
 			content_type = "text/html";
-		} else {
+		} else if (autoindex) {
 			// -------- no index file huh? generate directory listing...
 			body = webserv::get_directory_list(full_path, route);
 			content_type = "text/html";
-		}
+		} else
+			throw HttpCodeException(FORBIDDEN, "Error: directory listing denied");
 	} else {
 		// -------- it's a file, load content
 		body = get_file_content(full_path);

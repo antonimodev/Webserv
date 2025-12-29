@@ -30,9 +30,9 @@ class Parser {
 		~Parser(void);
 
 		// Request Line validation
-		static void	validMethod(const std::string& method);
-		static void	validRoute(const std::string& route);
-		static void	validVersion(const std::string& version);
+		static void			validMethod(const std::string& method);
+		static void			validRoute(const std::string& route);
+		static void			validVersion(const std::string& version);
 
 		static std::string	extractRoute(const std::string& full_route);
 		static std::string	extractQuery(const std::string& full_route);
@@ -44,7 +44,7 @@ class Parser {
 		 * @param pos In/Out position, updated to after "\r\n".
 		 * @complexity O(n) where n is length of request line.
 		 */
-		static void	parseRequestLine(const std::string& request, HttpRequest& http_struct, size_t& pos);
+		static void			parseRequestLine(const std::string& request, HttpRequest& http_struct, size_t& pos);
 
 		/**
 		 * @brief Parses headers until empty line "\r\n\r\n".
@@ -53,7 +53,7 @@ class Parser {
 		 * @param pos In/Out position, updated to start of body.
 		 * @complexity O(n) where n is total length of headers.
 		 */
-		static void	parseHeaders(const std::string& request, HttpRequest& http_struct, size_t& pos);
+		static void			parseHeaders(const std::string& request, HttpRequest& http_struct, size_t& pos);
 
 		/**
 		 * @brief Extracts body based on Content-Length header.
@@ -62,7 +62,11 @@ class Parser {
 		 * @param pos Starting position of body.
 		 * @complexity O(n) where n is body length.
 		 */
-		static void	parseBody(const std::string& request, HttpRequest& http_struct, size_t pos);
+		static void			parseBody(const std::string& request, HttpRequest& http_struct, size_t pos);
+
+		static void			parseChunkedBody(HttpRequest& http_struct, const std::string& request, size_t& pos);
+
+		static size_t		hexToDecimal(const std::string& hex);
 
 	public:
 		/**

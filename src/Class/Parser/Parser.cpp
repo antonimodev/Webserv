@@ -138,26 +138,30 @@ void	Parser::parseHeaders(const std::string& request, HttpRequest& http_struct, 
 
 
 void	Parser::parseBody(const std::string& request, HttpRequest& http_struct, size_t pos) {
-	std::map<std::string, std::string>::const_iterator it = http_struct.headers.find("Content-Length");
+	std::map<std::string, std::string>::const_iterator itLength = http_struct.headers.find("Content-Length");
+	std::map<std::string, std::string>::const_iterator itEncoding = http_struct.headers.find("Transfer-Encoding");
 
-	// -------- look if Transfer-Encoding is chunked for the current client
-
-
-	if (it == http_struct.headers.end()) {
-		return; // No body expected
+	if (itEncoding != http_struct.headers.end() && itEncoding->second == "chunked") {
+		parseChunkedBody(request, http_struct, pos);
+		return;
 	}
 
-	std::istringstream iss(it->second);
-	size_t content_length = 0;
-	iss >> content_length;
+	if (itLength != http_struct.headers.end()) {
+		std::istringstream iss(itLength->second);
+		size_t content_length = 0;
+		iss >> content_length;
 
-	if (iss.fail())
-		throw HttpCodeException(BAD_REQUEST, "Error: invalid Content-Length");
+		if (iss.fail())
+			throw HttpCodeException(BAD_REQUEST, "Error: invalid Content-Length");
 
-	if (pos + content_length > request.size())
-		throw PendingRequestException("Info: waiting to complete request body reading");
+		if (pos + content_length > request.size())
+			throw PendingRequestException("Info: waiting to complete request body reading");
 
-	http_struct.body = request.substr(pos, content_length);
+		http_struct.body = request.substr(pos, content_length);
+		return;
+	}
+
+	return;
 }
 
 
@@ -189,3 +193,51 @@ const std::string	get_mime_type(const std::string& extension) {
 
 	return "text/html";
 }
+
+size_t	Parser::hexToDecimal(const std::string& hex) {
+	size_t hex_translated;
+	std::stringstream ss;
+
+	ss << std::hex << hex;
+
+	ss >> hex_translated;
+
+	return hex_translated;
+}
+
+
+void Parser::parseChunkedBody(HttpRequest& http_struct, const std::string& request, size_t& pos) {
+    std::string body;
+
+    while (pos < request.size()) {
+        size_t endl = request.find("\r\n", pos);
+
+        if (endl == std::string::npos)
+			// Chunk size hasn't been fully received  yet
+            throw PendingRequestException("Info: waiting for complete chunk size line");
+
+        std::string size_hex = request.substr(pos, endl - pos);
+        size_t chunk_size = hexToDecimal(size_hex);
+
+        if (chunk_size == 0) {
+            if (request.find("\r\n", endl + 2) == std::string::npos)
+				// Last chunk is incomplete (not \r\n)
+                throw PendingRequestException("Info: waiting for chunk terminator after final chunk");
+            pos = endl + 4;
+            break;
+        }
+
+        pos = endl + 2;
+
+        if (request.size() < pos + chunk_size + 2)
+			// Current chunk content hasn't been fully received yet
+            throw PendingRequestException("Info: waiting for complete chunk data");
+
+        body.append(request.substr(pos, chunk_size));
+
+        pos += chunk_size + 2;
+    }
+
+    http_struct.body = body;
+}
+

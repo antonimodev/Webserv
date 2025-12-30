@@ -22,21 +22,17 @@
  * @brief Holds the state of a connected client.
  */
 struct ClientState {
-	ServerConfig* _server_config; // added: pointer to the server the client came from
+	int             _server_socket_fd;
+	ServerConfig*   _server_config;
+	HttpRequest     _http_request;
+	std::string     _request_buffer;
+	std::string     _response_buffer;
+	bool            _response_ready;
+	time_t          _last_active;
+	pid_t           _cgi_pid;
+	int             _cgi_pipe_fd;
 
-	HttpRequest	_http_request;    // Parsed HTTP request
-
-	std::string	_request_buffer;  // Stores the incoming request piece by piece
-	std::string	_response_buffer; // Stores the final response to be sent
-	bool		_response_ready;  // Flag: true when ready to send
-
-	time_t		_last_active;     // Last activity timestamp
-
-	// CGI
-	pid_t		_cgi_pid;
-	int			_cgi_pipe_fd;
-
-	ClientState(void) : _response_ready(false), _last_active(time(NULL)), _cgi_pid(-1), _cgi_pipe_fd(-1) {}
+	ClientState();  // ← Añadir esta declaración
 };
 
 
@@ -84,12 +80,14 @@ class Webserv {
 		void		processClientRequest(size_t& idx);
 		void		setPollEvent(int fd, short event);
 
+		// added
+		//ServerConfig* getServerBySocketFd(int socket_fd);
+		ServerConfig* getServerByHost(int server_socket_fd, std::string& host_header);
+		ServerConfig* getClientServerConfig(const HttpRequest& request, ClientState& client);
+
 		// Disable copy (Rule of Three - Webserv manages dynamic resources)
 		Webserv(const Webserv&);
 		Webserv& operator=(const Webserv&);
-
-		// added
-		ServerConfig* getServerBySocketFd(int socket_fd);
 
 	public:
 		Webserv(void);

@@ -24,6 +24,14 @@
 
 #include <algorithm>
 
+ClientState::ClientState() 
+		: _server_socket_fd(-1),
+		  _server_config(NULL),
+		  _response_ready(false),
+		  _last_active(time(NULL)),
+		  _cgi_pid(-1),
+		  _cgi_pipe_fd(-1) {}
+
 
 Webserv::Webserv(const char* conf_file) {
 	ConfParser parser(conf_file);
@@ -123,13 +131,13 @@ bool	Webserv::isCgiRequest(const std::string& full_path) {
 }
 
 
-ServerConfig* Webserv::getServerBySocketFd(int socket_fd) {
+/* ServerConfig* Webserv::getServerBySocketFd(int socket_fd) {
 	for (size_t i = 0; i < _server_sockets.size(); ++i) {
 		if (_server_sockets[i]->getSocketFd() == socket_fd)
 			return &_servers[i];
 	}
 	return NULL;
-}
+} */
 
 
 void	Webserv::disconnectClient(size_t& idx) {
@@ -272,6 +280,53 @@ static std::string handleStaticRequest(const HttpRequest& request, LocationConfi
 // REQUEST PROCESSING
 // ═══════════════════════════════════════════════════════════════════
 
+ServerConfig* Webserv::getServerByHost(int server_socket_fd, std::string& host_header) {
+	std::vector<ServerConfig*> candidates;
+	std::string hostName;
+
+	size_t colon_pos = host_header.find(":");
+	if (colon_pos == std::string::npos)
+		hostName = host_header;
+	else
+		hostName = host_header.substr(0, colon_pos);
+
+	// -------- keep all the servers with the same listening socket
+	for (size_t i = 0; i < _server_sockets.size(); ++i) {
+		if (_server_sockets[i]->getSocketFd() == server_socket_fd)
+			candidates.push_back(&_servers[i]);
+	}
+
+	if (candidates.empty())
+		return NULL;
+
+	for (size_t i = 0; i < candidates.size(); ++i) {
+		// -------- look for the server with the same hostName
+		for (size_t j = 0; j < candidates[i]->server_names.size(); ++j) {
+			if (candidates[i]->server_names[j] == hostName) {
+				return candidates[i];
+			}
+		}
+	}
+
+	return candidates[0];
+}
+
+ServerConfig* Webserv::getClientServerConfig(const HttpRequest& request, ClientState& client) {
+	std::string host_header;
+	std::map<std::string, std::string>::const_iterator it = request.headers.find("Host");
+
+	if (it != request.headers.end())
+		host_header = it->second;
+
+	// 					  example : getServerByHost(2, "servername.com")
+	ServerConfig* selected_server =	getServerByHost(client._server_socket_fd, host_header);
+
+	if (!selected_server)
+		throw HttpCodeException(INTERNAL_ERROR, "Error: no server found");
+	
+	return selected_server;
+
+}
 
 void	Webserv::processClientRequest(size_t& idx) {
 	const int client_fd = _poll_vector[idx].fd;
@@ -281,6 +336,9 @@ void	Webserv::processClientRequest(size_t& idx) {
 		client._http_request = Parser::parseHttpRequest(client._request_buffer);
 
 		const HttpRequest& request = client._http_request;
+
+		// added
+		client._server_config = getClientServerConfig(request, client);
 
 		// Validate body size against server config
 		validateBodySize(request, client._server_config);
@@ -343,7 +401,8 @@ void	Webserv::handleNewConnection(int socket_fd) {
 
 	addPollEvent(agent, POLLIN);
 	_client_map[agent] = ClientState();
-	_client_map[agent]._server_config = getServerBySocketFd(socket_fd);
+	//_client_map[agent]._server_config = getServerBySocketFd(socket_fd); -> stored later in processClientRequest
+	_client_map[agent]._server_socket_fd = socket_fd; // added
 	std::cout << "New client connected: " << agent << std::endl;
 }
 

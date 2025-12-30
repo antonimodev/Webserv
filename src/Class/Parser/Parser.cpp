@@ -142,7 +142,7 @@ void	Parser::parseBody(const std::string& request, HttpRequest& http_struct, siz
 	std::map<std::string, std::string>::const_iterator itEncoding = http_struct.headers.find("Transfer-Encoding");
 
 	if (itEncoding != http_struct.headers.end() && itEncoding->second == "chunked") {
-		parseChunkedBody(request, http_struct, pos);
+		parseChunkedBody(http_struct, request, pos);
 		return;
 	}
 

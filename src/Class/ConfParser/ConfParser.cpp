@@ -13,7 +13,7 @@
 
 
 ServerConfig::ServerConfig(void)
-	:	server_name(""),
+	:	server_names(),
 		listen_port(0),
 		host(""),
 		root(""),
@@ -249,6 +249,10 @@ void	ConfParser::validateServers(void) {
 		if (_servers[i].listen_port == 0)
 			throw ParseException("Server must have 'listen' directive");
 
+		if (_servers[i].server_names.empty()) {
+			_servers[i].server_names.push_back(""); // Default vacío (catch-all)
+		}
+
 		if (_servers[i].root.empty())
 			_servers[i].root = "./static";
 
@@ -297,7 +301,7 @@ void	ConfParser::parseFile(const char* fileName) {
 
 
 const std::vector<ServerConfig>& ConfParser::getServers() const {
-    return _servers;
+	return _servers;
 }
 
 

@@ -29,7 +29,6 @@ SRCS = 	main.cpp \
 		src/Class/Pipe/Pipe.cpp \
 		src/file_management.cpp \
 		src/Exceptions/HttpCodeException/HttpCodeException.cpp \
-		src/Exceptions/ParseException/ParseException.cpp \
 		src/Class/ConfParser/ConfParser.cpp \
 		src/Class/ConfParser/handler_functions.cpp \
 

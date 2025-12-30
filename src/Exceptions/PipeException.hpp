@@ -1,7 +1,6 @@
 #pragma once
 
 #include <stdexcept>
-#include <string>
 
 
 class PipeException : public std::runtime_error {

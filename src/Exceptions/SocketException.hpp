@@ -1,7 +1,6 @@
 #pragma once
 
 #include <stdexcept>
-#include <string>
 
 
 class SocketException : public std::runtime_error {

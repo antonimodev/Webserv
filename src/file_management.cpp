@@ -101,7 +101,7 @@ std::string	get_extension(const std::string& route) {
 	if (slash_pos != std::string::npos && dot_pos < slash_pos)
 		return "";
 
-	return route.substr(dot_pos + 1);
+	return route.substr(dot_pos);
 }
 
 

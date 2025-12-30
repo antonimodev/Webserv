@@ -21,6 +21,7 @@
 #include "HttpCodeException.hpp"
 #include "SocketException.hpp"
 #include "PendingRequestException.hpp"
+#include "ParseException.hpp"
 
 #include <algorithm>
 
@@ -117,9 +118,9 @@ bool	Webserv::isServerSocket(int fd) const {
 }
 
 
-bool	Webserv::isCgiRequest(const std::string& full_path) {
+bool	Webserv::isCgiRequest(const std::string& full_path, const std::pair<std::string, std::string>& cgi_extension) {
 	std::string extension = get_extension(full_path);
-	return (extension == "php" || extension == "py");
+	return (extension == cgi_extension.first);
 }
 
 
@@ -287,18 +288,21 @@ void	Webserv::processClientRequest(size_t& idx) {
 
 		// Find matching location
 		LocationConfig* location = findLocation(request.route, client._server_config);
+		
+		if (location == NULL)
+			throw ParseException("Error: Location is NULL");
 
 		// Validate method is allowed
-		if (location != NULL && !isAllowedMethod(request.method, location->allowed_methods))
+		if (!isAllowedMethod(request.method, location->allowed_methods))
 			throw HttpCodeException(METHOD_NOT_ALLOWED, "Error: method not allowed");
 
 		// Build filesystem path for CGI check
 		std::string full_path = buildFullPath(request.route, location, client._server_config);
 
 		// Handle CGI requests
-		if (isCgiRequest(full_path)) {
+		if (isCgiRequest(full_path, location->cgi_extension)) {
 			CgiHandler cgi(request, full_path);
-			int pipe_fd = cgi.executeCgi(client._cgi_pid);
+			int pipe_fd = cgi.executeCgi(client._cgi_pid, location->cgi_extension);
 
 			client._cgi_pipe_fd = pipe_fd;
 

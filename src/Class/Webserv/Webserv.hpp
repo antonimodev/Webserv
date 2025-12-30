@@ -76,7 +76,7 @@ class Webserv {
 		 * @return true if fd is a server socket.
 		 */
 		bool		isServerSocket(int fd) const;
-		bool		isCgiRequest(const std::string& full_path);
+		bool		isCgiRequest(const std::string& full_path, const std::pair<std::string, std::string>& cgi_extension);
 
 		void		cleanupCgiProcess(int client_fd);
 

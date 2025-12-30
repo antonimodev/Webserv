@@ -142,7 +142,7 @@ void	Parser::parseBody(const std::string& request, HttpRequest& http_struct, siz
 	std::map<std::string, std::string>::const_iterator itEncoding = http_struct.headers.find("Transfer-Encoding");
 
 	if (itEncoding != http_struct.headers.end() && itEncoding->second == "chunked") {
-		parseChunkedBody(request, http_struct, pos);
+		parseChunkedBody(http_struct, request, pos);
 		return;
 	}
 
@@ -184,12 +184,12 @@ HttpRequest Parser::parseHttpRequest(const std::string& request) {
 
 
 const std::string	get_mime_type(const std::string& extension) {
-	if (extension == "html") return "text/html";
-	if (extension == "css")  return "text/css";
-	if (extension == "png")  return "image/png";
-	if (extension == "jpg" || extension == "jpeg") return "image/jpeg";
-	if (extension == "ico")  return "image/x-icon";
-	if (extension == "txt")  return "text/plain";
+	if (extension == ".html") return "text/html";
+	if (extension == ".css")  return "text/css";
+	if (extension == ".png")  return "image/png";
+	if (extension == ".jpg" || extension == "jpeg") return "image/jpeg";
+	if (extension == ".ico")  return "image/x-icon";
+	if (extension == ".txt")  return "text/plain";
 
 	return "text/html";
 }

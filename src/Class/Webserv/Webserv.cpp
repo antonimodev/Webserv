@@ -25,6 +25,14 @@
 
 #include <algorithm>
 
+ClientState::ClientState() 
+		:	_server_socket_fd(-1),
+			_server_config(NULL),
+			_response_ready(false),
+			_last_active(time(NULL)),
+			_cgi_pid(-1),
+			_cgi_pipe_fd(-1) {}
+
 
 Webserv::Webserv(const char* conf_file) {
 	ConfParser parser(conf_file);
@@ -124,13 +132,13 @@ bool	Webserv::isCgiRequest(const std::string& full_path, const std::pair<std::st
 }
 
 
-ServerConfig* Webserv::getServerBySocketFd(int socket_fd) {
+/* ServerConfig* Webserv::getServerBySocketFd(int socket_fd) {
 	for (size_t i = 0; i < _server_sockets.size(); ++i) {
 		if (_server_sockets[i]->getSocketFd() == socket_fd)
 			return &_servers[i];
 	}
 	return NULL;
-}
+} */
 
 
 void	Webserv::disconnectClient(size_t& idx) {
@@ -158,6 +166,33 @@ void	Webserv::cleanupCgiProcess(int client_fd) {
 	_client_map[client_fd]._cgi_pid = -1;
 }
 
+// added
+void Webserv::handleRedirect(int client_fd, int code, const std::string& url) {
+	std::ostringstream response;
+	std::string status_message;
+
+	switch (code) {
+		case 301: status_message = "Moved Permanently"; break;
+		case 302: status_message = "Found"; break;
+		case 303: status_message = "See Other"; break;
+		case 307: status_message = "Temporary Redirect"; break;
+		case 308: status_message = "Permanent Redirect"; break;
+		default: status_message = "Redirect"; break;
+	}
+
+	response << "HTTP/1.1 " << code << " " << status_message << "\r\n";
+	response << "Location: " << url << "\r\n";
+	response << "Content-Length: 0\r\n";
+	response << "Connection: close\r\n";
+	response << "\r\n";
+
+	std::string response_str = response.str();
+
+	send(client_fd, response_str.c_str(), response_str.length(), 0);
+
+	std::cout << "Redirect " << code << " sent to client "
+			<< client_fd << " -> " << url << std::endl;
+}
 
 void	Webserv::checkTimeout(void) {
 	time_t current_time = time(NULL);
@@ -250,12 +285,14 @@ static std::string getIndexFile(LocationConfig* location, ServerConfig* config) 
 	return config->index;
 }
 
+
 static std::string extract_filename(const std::string& route) {
 	size_t pos = route.find_last_of('/');
 	if (pos == std::string::npos)
 		return route;
 	return route.substr(pos + 1);
 }
+
 
 static std::string handleStaticRequest(const HttpRequest& request, LocationConfig* location, ServerConfig* config) {
 	const std::string& method = request.method;
@@ -290,6 +327,53 @@ static std::string handleStaticRequest(const HttpRequest& request, LocationConfi
 // REQUEST PROCESSING
 // ═══════════════════════════════════════════════════════════════════
 
+ServerConfig* Webserv::getServerByHost(int server_socket_fd, std::string& host_header) {
+	std::vector<ServerConfig*> candidates;
+	std::string hostName;
+
+	size_t colon_pos = host_header.find(":");
+	if (colon_pos == std::string::npos)
+		hostName = host_header;
+	else
+		hostName = host_header.substr(0, colon_pos);
+
+	// -------- keep all the servers with the same listening socket
+	for (size_t i = 0; i < _server_sockets.size(); ++i) {
+		if (_server_sockets[i]->getSocketFd() == server_socket_fd)
+			candidates.push_back(&_servers[i]);
+	}
+
+	if (candidates.empty())
+		return NULL;
+
+	for (size_t i = 0; i < candidates.size(); ++i) {
+		// -------- look for the server with the same hostName
+		for (size_t j = 0; j < candidates[i]->server_names.size(); ++j) {
+			if (candidates[i]->server_names[j] == hostName) {
+				return candidates[i];
+			}
+		}
+	}
+
+	return candidates[0];
+}
+
+ServerConfig* Webserv::getClientServerConfig(const HttpRequest& request, ClientState& client) {
+	std::string host_header;
+	std::map<std::string, std::string>::const_iterator it = request.headers.find("Host");
+
+	if (it != request.headers.end())
+		host_header = it->second;
+
+	// 					  example : getServerByHost(2, "servername.com")
+	ServerConfig* selected_server =	getServerByHost(client._server_socket_fd, host_header);
+
+	if (!selected_server)
+		throw HttpCodeException(INTERNAL_ERROR, "Error: no server found");
+
+	return selected_server;
+
+}
 
 void	Webserv::processClientRequest(size_t& idx) {
 	const int client_fd = _poll_vector[idx].fd;
@@ -300,6 +384,9 @@ void	Webserv::processClientRequest(size_t& idx) {
 
 		const HttpRequest& request = client._http_request;
 
+		// added
+		client._server_config = getClientServerConfig(request, client);
+
 		// Validate body size against server config
 		validateBodySize(request, client._server_config);
 
@@ -308,6 +395,12 @@ void	Webserv::processClientRequest(size_t& idx) {
 		
 		if (location == NULL)
 			throw ParseException("Error: Location is NULL");
+
+		if (location->redirect.first > 0) {
+			handleRedirect(client_fd, location->redirect.first, location->redirect.second);
+			disconnectClient(idx);
+			return;
+		}
 
 		// Validate method is allowed
 		if (!isAllowedMethod(request.method, location->allowed_methods))
@@ -364,7 +457,8 @@ void	Webserv::handleNewConnection(int socket_fd) {
 
 	addPollEvent(agent, POLLIN);
 	_client_map[agent] = ClientState();
-	_client_map[agent]._server_config = getServerBySocketFd(socket_fd);
+	//_client_map[agent]._server_config = getServerBySocketFd(socket_fd); -> stored later in processClientRequest
+	_client_map[agent]._server_socket_fd = socket_fd;
 	std::cout << "New client connected: " << agent << std::endl;
 }
 

@@ -27,7 +27,7 @@ struct LocationConfig {
  * @brief Configuration for a server block
  */
 struct ServerConfig {
-	std::string								server_name;
+	std::vector<std::string>				server_names; // changed to vector
 	int										listen_port;
 	std::string								host;
 	std::string								root;

@@ -164,8 +164,11 @@ std::string	delete_resource(const std::string& path) {
 	if (S_ISDIR(info.st_mode))
 		throw HttpCodeException(FORBIDDEN, "Error: cannot delete directory");
 
+	if (access(path.c_str(), W_OK) != 0)
+		throw HttpCodeException(FORBIDDEN, "Error: no write permission for " + path);
+
 	if (std::remove(path.c_str()) != 0)
-		throw HttpCodeException(INTERNAL_ERROR, "Error: ");
+		throw HttpCodeException(INTERNAL_ERROR, "Error: failed to delete file " + path);
 
 	return "HTTP/1.1 204 No Content\r\n"
 			"Content-Length: 0 \r\n"

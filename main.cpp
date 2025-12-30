@@ -3,6 +3,7 @@
 #include "CgiException.hpp"
 #include "SocketException.hpp"
 #include "PollException.hpp"
+#include "ParseException.hpp"
 
 #include "Webserv.hpp"
 #include "Socket.hpp"
@@ -22,6 +23,9 @@ int main(int ac, char** av) {
 		std::cerr << e.what() << std::endl;
 		return 1;
 	} catch (const CgiException& e) {
+		std::cerr << e.what() << std::endl;
+		return 1;
+	} catch (const ParseException& e) {
 		std::cerr << e.what() << std::endl;
 		return 1;
 	}

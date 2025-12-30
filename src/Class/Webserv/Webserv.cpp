@@ -249,6 +249,12 @@ static std::string getIndexFile(LocationConfig* location, ServerConfig* config) 
 	return config->index;
 }
 
+static std::string extract_filename(const std::string& route) {
+    size_t pos = route.find_last_of('/');
+    if (pos == std::string::npos)
+        return route;
+    return route.substr(pos + 1);
+}
 
 static std::string handleStaticRequest(const HttpRequest& request, LocationConfig* location, ServerConfig* config) {
 	const std::string& method = request.method;
@@ -258,8 +264,17 @@ static std::string handleStaticRequest(const HttpRequest& request, LocationConfi
 		std::string index_file = getIndexFile(location, config);
 		return load_resource(full_path, request.route, location->autoindex, index_file);
 	}
-	else if (method == "POST")
-		return save_resource(full_path, request.body);
+	else if (method == "POST") {
+		if (location != NULL && !location->upload_path.empty()){
+			std::string filename = extract_filename(request.route);
+			std::string upload_path = location->upload_path;
+			if(upload_path[upload_path.size() - 1] != '/')
+				upload_path += "/";
+			return save_resource(upload_path + filename, request.body);
+		}
+		else 
+			return save_resource(full_path, request.body);
+	}
 	else
 		return delete_resource(full_path);
 

@@ -165,6 +165,33 @@ void	Webserv::cleanupCgiProcess(int client_fd) {
 	_client_map[client_fd]._cgi_pid = -1;
 }
 
+// added
+void Webserv::handleRedirect(int client_fd, int code, const std::string& url) {
+	std::ostringstream response;
+	std::string status_message;
+	
+	switch (code) {
+		case 301: status_message = "Moved Permanently"; break;
+		case 302: status_message = "Found"; break;
+		case 303: status_message = "See Other"; break;
+		case 307: status_message = "Temporary Redirect"; break;
+		case 308: status_message = "Permanent Redirect"; break;
+		default: status_message = "Redirect"; break;
+	}
+	
+	response << "HTTP/1.1 " << code << " " << status_message << "\r\n";
+	response << "Location: " << url << "\r\n";
+	response << "Content-Length: 0\r\n";
+	response << "Connection: close\r\n";
+	response << "\r\n";
+	
+	std::string response_str = response.str();
+	
+	send(client_fd, response_str.c_str(), response_str.length(), 0);
+	
+	std::cout << "Redirect " << code << " sent to client " << client_fd 
+			  << " -> " << url << std::endl;
+}
 
 void	Webserv::checkTimeout(void) {
 	time_t current_time = time(NULL);
@@ -345,6 +372,12 @@ void	Webserv::processClientRequest(size_t& idx) {
 
 		// Find matching location
 		LocationConfig* location = findLocation(request.route, client._server_config);
+
+		if (location != NULL && location->redirect.first > 0) {
+			handleRedirect(client_fd, location->redirect.first, location->redirect.second);
+			disconnectClient(idx);
+			return;
+		}
 
 		// Validate method is allowed
 		if (location != NULL && !isAllowedMethod(request.method, location->allowed_methods))

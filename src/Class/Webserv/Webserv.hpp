@@ -81,9 +81,9 @@ class Webserv {
 		void		setPollEvent(int fd, short event);
 
 		// added
-		//ServerConfig* getServerBySocketFd(int socket_fd);
-		ServerConfig* getServerByHost(int server_socket_fd, std::string& host_header);
-		ServerConfig* getClientServerConfig(const HttpRequest& request, ClientState& client);
+		void			handleRedirect(int client_fd, int code, const std::string& url);
+		ServerConfig*	getServerByHost(int server_socket_fd, std::string& host_header);
+		ServerConfig*	getClientServerConfig(const HttpRequest& request, ClientState& client);
 
 		// Disable copy (Rule of Three - Webserv manages dynamic resources)
 		Webserv(const Webserv&);

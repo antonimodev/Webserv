@@ -66,6 +66,6 @@ help:
 
 t: re
 	@clear
-	./webserv ./conf/test.conf
+	@./webserv ./conf/test.conf || 2>/dev/null
 
 .PHONY: all clean fclean re

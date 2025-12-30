@@ -127,7 +127,7 @@ static std::string getValue(const std::vector<std::string>& content, size_t& i) 
 
 	++i;
 	if (i >= content.size())
-		throw ParseException("Unexpected end of file after directive");
+		throw ParseException("Error: unexpected end of file after directive");
 
 	while (i < content.size()) {
 		const std::string& token = content[i];
@@ -148,7 +148,7 @@ static std::string getValue(const std::vector<std::string>& content, size_t& i) 
 		++i;
 	}
 
-	throw ParseException("Missing semicolon after directive value");
+	throw ParseException("Error: missing semicolon after directive value");
 }
 
 
@@ -157,10 +157,10 @@ void	ConfParser::saveToken(std::string token, const std::vector<std::string>& co
 		bool isLocationContext = (_brackets.size() == 2);
 
 		if (!isServerContext && !isLocationContext)
-			throw ParseException("Invalid nesting level for token: " + token);
+			throw ParseException("Error: invalid nesting level for token: " + token);
 
 		if (i + 1 >= content.size())
-			throw ParseException("Missing value for directive: " + token);
+			throw ParseException("Error: missing value for directive: " + token);
 
 		std::string value = getValue(content, i);
 
@@ -168,7 +168,7 @@ void	ConfParser::saveToken(std::string token, const std::vector<std::string>& co
 			std::map<std::string, ServerHandler>::iterator it = _serverHandlers.find(token);
 
 			if (it == _serverHandlers.end())
-				throw ParseException("Unknown server directive: " + token);
+				throw ParseException("Error: unknown server directive: " + token);
 
 			it->second(value, _servers.back());
 			return;
@@ -178,10 +178,10 @@ void	ConfParser::saveToken(std::string token, const std::vector<std::string>& co
 			std::map<std::string, LocationHandler>::iterator it = _locationHandlers.find(token);
 
 			if (it == _locationHandlers.end())
-				throw ParseException("Unknown location directive: " + token);
+				throw ParseException("Error: unknown location directive: " + token);
 
 			if (_current_location_path.empty())
-				throw ParseException("No location context available");
+				throw ParseException("Error: no location context available");
 
 			LocationConfig& currentLocation = _servers.back().locations[_current_location_path];
 			it->second(value, currentLocation);
@@ -205,7 +205,7 @@ void	ConfParser::parseToken(const std::string& token, const std::vector<std::str
 
 		// -------- if we find one previous location with same path, exception.
 		if (_servers.back().locations.find(path) != _servers.back().locations.end())
-			throw ParseException("Duplicate location block: " + path);
+			throw ParseException("Error: duplicate location block: " + path);
 		
 		_servers.back().locations[path] = LocationConfig(path);
 		
@@ -223,7 +223,7 @@ void	ConfParser::parseToken(const std::string& token, const std::vector<std::str
 	if (token == "}") {
 		// -------- we need at least one opening bracket to match
 		if (_brackets.empty())
-			throw ParseException("Unmatched closing bracket");
+			throw ParseException("Error: unmatched closing bracket");
 		
 		_brackets.pop();
 
@@ -236,18 +236,18 @@ void	ConfParser::parseToken(const std::string& token, const std::vector<std::str
 
 	// -------- if we reach here, we expect a directive, so there must be an open bracket
 	if (_brackets.empty())
-		throw ParseException("Unexpected token: " + token);
+		throw ParseException("Error: unexpected token: " + token);
 
 	saveToken(token, content, i);
 }
 
 void	ConfParser::validateServers(void) {
 	if (_servers.empty())
-		throw ParseException("Configuration must have at least one server block");
+		throw ParseException("Error: configuration must have at least one server block");
 
 	for (size_t i = 0; i < _servers.size(); ++i) {
 		if (_servers[i].listen_port == 0)
-			throw ParseException("Server must have 'listen' directive");
+			throw ParseException("Error: server must have 'listen' directive");
 
 		if (_servers[i].root.empty())
 			_servers[i].root = "./static";
@@ -257,13 +257,13 @@ void	ConfParser::validateServers(void) {
 
 		// --------- simple host validation (only digits and dots)
 		if (_servers[i].host.empty())
-			throw ParseException("Server must have 'host' directive");
+			throw ParseException("Error: server must have 'host' directive");
 
 		if (_servers[i].host.find_first_not_of("0123456789.") != std::string::npos)
-			throw ParseException("Invalid host format: " + _servers[i].host);
+			throw ParseException("Error: invalid host format: " + _servers[i].host);
 
 		if (_servers[i].listen_port < 1 || _servers[i].listen_port > 65535)
-			throw ParseException("Invalid port number (must be 1-65535)");
+			throw ParseException("Error: invalid port number (must be 1-65535)");
 
 		// Location must have at least 1 method
 		std::map<std::string, LocationConfig>::iterator it;
@@ -289,7 +289,7 @@ void	ConfParser::parseFile(const char* fileName) {
 	}
 
 	if (!_brackets.empty())
-		throw ParseException("Unmatched opening bracket");
+		throw ParseException("Error: unmatched opening bracket");
 
 	validateServers();
 	//printServers();

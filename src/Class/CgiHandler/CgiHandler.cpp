@@ -82,14 +82,10 @@ std::string CgiHandler::process_response(const std::string& content) {
 
 // objective: [0] /usr/bin/php-cgi [1] script.php [2] NULL
 // probably use route instead send httpRequest
-int	CgiHandler::executeCgi(pid_t& pid) {
+int	CgiHandler::executeCgi(pid_t& pid, std::pair<std::string, std::string>& cgi_extension) {
 	std::vector<std::string> args;
 
-	if (get_extension(_env["PATH_INFO"]) == "php")
-		args.push_back("/usr/bin/php-cgi");
-	else
-		args.push_back("/usr/bin/python3");
-
+	args.push_back(cgi_extension.second);
 	args.push_back(_env["SCRIPT_FILENAME"]);
 
 	ExecveBuilder	env_builder(_env); // receives map

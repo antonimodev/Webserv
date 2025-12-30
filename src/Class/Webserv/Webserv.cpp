@@ -266,7 +266,7 @@ static std::string handleStaticRequest(const HttpRequest& request, LocationConfi
 		return load_resource(full_path, request.route, location->autoindex, index_file);
 	}
 	else if (method == "POST") {
-		if (location->upload_path.empty()){
+		if (!location->upload_path.empty()){
 			std::string filename = extract_filename(request.route);
 			std::string upload_path = location->upload_path;
 
@@ -318,7 +318,7 @@ void	Webserv::processClientRequest(size_t& idx) {
 
 		// Handle CGI requests
 		if (isCgiRequest(full_path, location->cgi_extension)) {
-			CgiHandler cgi(request, full_path);
+			CgiHandler cgi(request, full_path, location->cgi_extension);
 			int pipe_fd = cgi.executeCgi(client._cgi_pid, location->cgi_extension);
 
 			client._cgi_pipe_fd = pipe_fd;

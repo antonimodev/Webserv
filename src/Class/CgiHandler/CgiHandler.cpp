@@ -14,17 +14,20 @@
 #include "HttpCodeException.hpp"
 
 
-CgiHandler::CgiHandler(const HttpRequest& request, const std::string& full_path) {
-	_env["REQUEST_METHOD"] = request.method;
-	_env["QUERY_STRING"] = request.query;
-	_env["PATH_INFO"] = request.route;
-	_env["SCRIPT_FILENAME"] = full_path;
-	_env["CONTENT_LENGTH"] = getHeader(request, "Content-Length");
-	_env["CONTENT_TYPE"] = getHeader(request, "Content-Type");
+CgiHandler::CgiHandler(const HttpRequest& request, const std::string& full_path, std::pair<std::string, std::string> cgi_extension) {
+    _env["REQUEST_METHOD"] = request.method;
+    _env["QUERY_STRING"] = request.query;
 
-	_env["GATEWAY_INTERFACE"] = "CGI/1.1"; // RFC (Request For Comments) good practice
-	_env["SERVER_PROTOCOL"] = "HTTP/1.1";
-	_env["REDIRECT_STATUS"] = "200";
+    _env["PATH_INFO"] = "";
+    _env["SCRIPT_FILENAME"] = full_path;
+    setScriptInfo(request.route, full_path, cgi_extension.first);
+
+    _env["CONTENT_LENGTH"] = getHeader(request, "Content-Length");
+    _env["CONTENT_TYPE"] = getHeader(request, "Content-Type");
+
+    _env["GATEWAY_INTERFACE"] = "CGI/1.1";
+    _env["SERVER_PROTOCOL"] = "HTTP/1.1";
+    _env["REDIRECT_STATUS"] = "200";
 }
 
 
@@ -53,6 +56,22 @@ std::string CgiHandler::getHeader(const HttpRequest& request, const std::string&
 	return it->second;
 }
 
+
+void	CgiHandler::setScriptInfo(const std::string& route, const std::string& full_path, const std::string& cgi_ext) {
+    size_t pos = route.find(cgi_ext);
+    
+    if (pos != std::string::npos) {
+        size_t end_of_script = pos + cgi_ext.size();
+
+        _env["PATH_INFO"] = route.substr(end_of_script);
+
+        size_t path_info_len = _env["PATH_INFO"].size();
+
+        if (full_path.size() >= path_info_len) {
+            _env["SCRIPT_FILENAME"] = full_path.substr(0, full_path.size() - path_info_len);
+        }
+    }
+}
 
 // PUBLIC
 

@@ -148,6 +148,8 @@ bool	Webserv::isServerSocket(int fd) const {
 
 
 bool	Webserv::isCgiRequest(const std::string& full_path, const std::pair<std::string, std::string>& cgi_extension) {
+	if (cgi_extension.first.empty())
+		return false;
 	std::string extension = get_extension(full_path);
 	return (extension == cgi_extension.first);
 }
@@ -275,7 +277,7 @@ static void validateBodySize(const HttpRequest& request, const ServerConfig* con
 
 	// Body already parsed by Parser, just check size
 	if (request.body.size() > config->client_max_body_size)
-		throw HttpCodeException(BAD_REQUEST, "Request body too large");
+		throw HttpCodeException(PAYLOAD_LARGE, "Error: Payload too large");
 }
 
 
@@ -336,14 +338,11 @@ static std::string handleStaticRequest(const HttpRequest& request, LocationConfi
 
 			return save_resource(upload_path + filename, request.body);
 		}
-		else 
-			return save_resource(full_path, request.body);
+		else
+			throw HttpCodeException(FORBIDDEN, "Error: Upload not allowed (no upload_path)");
 	}
 	else
 		return delete_resource(full_path);
-
-	// This should never happen due to validation, but just in case
-	// throw HttpCodeException(METHOD_NOT_ALLOWED, "Error: method not supported");
 }
 
 
@@ -459,7 +458,7 @@ void	Webserv::processClientRequest(size_t& idx) {
 		LocationConfig* location = findLocation(request.route, client._server_config);
 		
 		if (location == NULL)
-			throw ParseException("Error: Location is NULL");
+			throw HttpCodeException(NOT_FOUND, "Error: No location matches the route");
 
 		if (location->redirect.first > 0) {
 			handleRedirect(client_fd, location->redirect.first, location->redirect.second);

@@ -11,12 +11,14 @@ HttpCodeException::HttpCodeException(HttpStatus code, const std::string& log_msg
 // PRIVATE
 const char* HttpCodeException::statusToString(HttpStatus status) const {
 	switch (status) {
-		case BAD_REQUEST:        return "400 Bad Request";
-		case FORBIDDEN:          return "403 Forbidden";
-		case NOT_FOUND:          return "404 Not Found";
-		case METHOD_NOT_ALLOWED: return "405 Method Not Allowed";
-		case INTERNAL_ERROR:     return "500 Internal Server Error";
-		default:                 return "500 Internal Server Error";
+		case BAD_REQUEST:			return "400 Bad Request";
+		case FORBIDDEN:				return "403 Forbidden";
+		case NOT_FOUND:				return "404 Not Found";
+		case METHOD_NOT_ALLOWED:	return "405 Method Not Allowed";
+		case PAYLOAD_LARGE:			return "413 Payload too large";
+		case INTERNAL_ERROR:		return "500 Internal Server Error";
+		case UNKNOWN_METHOD_ERROR:	return "501 Method not implemented";
+		default:					return "500 Internal Server Error";
 	}
 }
 

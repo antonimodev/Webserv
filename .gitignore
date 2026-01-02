@@ -1,5 +1,7 @@
 # FILES
 commits.txt
+prueba.txt
+test.md
 .vscode
 obj
 
@@ -8,3 +10,5 @@ test_www
 # EXECUTABLE
 a.out
 webserv
+
+.nfs0000000006f2000900000007

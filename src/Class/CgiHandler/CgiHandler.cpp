@@ -15,6 +15,8 @@
 
 
 CgiHandler::CgiHandler(const HttpRequest& request, const std::string& full_path, std::pair<std::string, std::string> cgi_extension) {
+	_body = request.body;
+
     _env["REQUEST_METHOD"] = request.method;
     _env["QUERY_STRING"] = request.query;
 
@@ -101,7 +103,7 @@ std::string CgiHandler::process_response(const std::string& content) {
 
 // objective: [0] /usr/bin/php-cgi [1] script.php [2] NULL
 // probably use route instead send httpRequest
-int	CgiHandler::executeCgi(pid_t& pid, std::pair<std::string, std::string>& cgi_extension) {
+/* int	CgiHandler::executeCgi(pid_t& pid, std::pair<std::string, std::string>& cgi_extension) {
 	std::vector<std::string> args;
 
 	args.push_back(cgi_extension.second);
@@ -109,7 +111,7 @@ int	CgiHandler::executeCgi(pid_t& pid, std::pair<std::string, std::string>& cgi_
 
 	ExecveBuilder	env_builder(_env); // receives map
 	ExecveBuilder	arg_builder(args); // receives vector
-	
+
 	try {
 		Pipe pipes;
 
@@ -130,4 +132,45 @@ int	CgiHandler::executeCgi(pid_t& pid, std::pair<std::string, std::string>& cgi_
 		std::cerr << e.what() << std::cout; // not sure about this catch
 		return -1;
 	}
+} */
+
+int CgiHandler::executeCgi(pid_t& pid, std::pair<std::string, std::string>& cgi_extension) {
+    std::vector<std::string> args;
+
+    args.push_back(cgi_extension.second);
+    args.push_back(_env["SCRIPT_FILENAME"]);
+
+    ExecveBuilder env_builder(_env);
+    ExecveBuilder arg_builder(args);
+
+    try {
+        Pipe output_pipe;		// from child (script output) to parent
+        Pipe input_pipe;		// from parent (script input) to child
+
+        pid_t child = fork();
+        pid = child;
+
+        if (child == 0) {
+            output_pipe.fdRedirection(STDOUT_FILENO, Pipe::WRITE);
+            input_pipe.fdRedirection(STDIN_FILENO, Pipe::READ);
+
+            execve(args[0].c_str(), arg_builder.get(), env_builder.get());
+            throw CgiException("Error: execve failed");
+        }
+
+        output_pipe.closeWritePipe();
+        input_pipe.closeReadPipe();
+
+        if (!_body.empty()) {
+            write(input_pipe.getWritePipe(), _body.c_str(), _body.size());
+        }
+
+        input_pipe.closeWritePipe();
+
+        return output_pipe.fdRelease(Pipe::READ);
+
+    } catch (const PipeException& e) {
+        std::cerr << e.what() << std::endl;
+        return -1;
+    }
 }

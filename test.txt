@@ -1,0 +1,185 @@
+¡Perfecto! He analizado la hoja de evaluación (`evalsheet-webserv.pdf`). Aunque sea de 2021, la estructura de la defensa de **Webserv** en 42 no ha cambiado drásticamente en los puntos clave.
+
+Aquí tienes una **batería de pruebas ("Cheat Sheet")** diseñada para que tú mismo verifiques punto por punto lo que te va a pedir el evaluador.
+
+---
+
+### 1. ⚙️ Configuración y Virtual Hosting
+
+El evaluador comprobará si tu servidor es capaz de manejar múltiples dominios en el mismo puerto y si respeta los límites.
+
+**A. Virtual Hosting (Mismo IP/Puerto, diferente Nombre)**
+Configura en tu archivo `.conf` dos servidores en el puerto `8080`: uno con `server_name test1` y otro con `server_name test2` (o `example.com`).
+
+* **Prueba:** Pide el primero.
+```bash
+curl -v --resolve test1:8080:127.0.0.1 http://test1:8080/
+
+```
+
+
+* **Prueba:** Pide el segundo (debe servir un contenido/root diferente si así lo configuraste).
+```bash
+curl -v --resolve test2:8080:127.0.0.1 http://test2:8080/
+
+```
+
+
+
+**B. Límites de Cuerpo (Body Limit)**
+En tu config, pon `client_max_body_size 10;` en una location.
+
+* **Prueba:** Envía más de 10 bytes.
+```bash
+curl -v -X POST -d "12345678901" http://127.0.0.1:8080/upload_limit_test
+
+```
+
+
+
+*Resultado esperado:* **Error 413 Payload Too Large**.
+
+
+
+**C. Conflicto de Puertos**
+
+* **Prueba:** Abre dos terminales. Ejecuta `./webserv` en una. Intenta ejecutar `./webserv` en la otra.
+
+
+*Resultado esperado:* El segundo debe fallar al iniciar (Bind error: Address already in use) y **no** debe crashear.
+
+
+
+---
+
+### 2. 📡 Métodos HTTP y Rutas
+
+Debes demostrar que los métodos funcionan y que respetas los permisos.
+
+**A. GET y Autoindex**
+
+* **Prueba:** Pide un directorio con `autoindex on`.
+```bash
+curl -v http://127.0.0.1:8080/directory/
+
+```
+
+
+*Resultado esperado:* Listado de archivos HTML.
+* **Prueba:** Pide un archivo inexistente.
+```bash
+curl -v http://127.0.0.1:8080/no_existe.html
+
+```
+
+
+
+*Resultado esperado:* Tu página personalizada de **Error 404** (no la por defecto de NGINX/Apache).
+
+
+
+**B. Método no permitido**
+Configura una ruta que SOLO acepte `GET`.
+
+* **Prueba:** Intenta borrar.
+```bash
+curl -v -X DELETE http://127.0.0.1:8080/solo_get/archivo.txt
+
+```
+
+
+
+*Resultado esperado:* **Error 405 Method Not Allowed**.
+
+
+
+**C. Método Desconocido**
+
+* **Prueba:** Inventa un método.
+```bash
+curl -v -X PATATA http://127.0.0.1:8080/index.html
+
+```
+
+
+
+*Resultado esperado:* Código 405 o 501, pero **NUNCA** un crash.
+
+
+
+---
+
+### 3. 📂 Upload y Persistencia
+
+El evaluador subirá un archivo y querrá recuperarlo para ver si es idéntico.
+
+**A. Subir Archivo (POST)**
+Asegúrate de tener una ruta con `upload_path` configurado.
+
+```bash
+# Crear archivo de prueba
+echo "Contenido importante" > prueba.txt
+# Subir
+curl -v -X POST -T prueba.txt http://127.0.0.1:8080/uploads/prueba.txt
+
+```
+
+**B. Recuperar Archivo (GET)**
+
+```bash
+curl -v http://127.0.0.1:8080/uploads/prueba.txt
+
+```
+
+*Resultado esperado:* Debe devolver "Contenido importante".
+
+---
+
+### 4. 💣 Stress Test (Siege)
+
+Esta es la prueba final. Tu servidor no debe tener fugas de memoria (leaks) ni bloquearse.
+
+**Comando de asedio:**
+Instala `siege` si no lo tienes (`brew install siege` o `apt install siege`).
+
+```bash
+siege -b -t 30s http://127.0.0.1:8080/index.html
+
+```
+
+* `-b`: Benchmark (sin pausas).
+* `-t 30s`: Durante 30 segundos.
+
+**Monitorización de Leaks:**
+Mientras corre el siege, en otra terminal:
+
+* **Mac/Linux:** `top` (mira la columna MEM/RES). Si sube sin parar, tienes un leak.
+* **Alternativa:** Ejecuta tu servidor con `valgrind` (en Linux) mientras le pasas el siege.
+
+*Requisito:* Disponibilidad > 99.5%.
+
+---
+
+### 5. 🐍 CGI (Bonus)
+
+Ya hemos trabajado esto, pero asegúrate de probarlo con los scripts que creamos antes.
+
+* **Prueba PHP/Python POST:**
+```bash
+curl -v -X POST -d "Probando CGI" http://127.0.0.1:8080/test.php
+
+```
+
+
+*Resultado:* Debe imprimir "Probando CGI" (gracias a tu pipe nuevo).
+
+### 💡 Consejo para la Defensa
+
+En la sección de "Basic Checks", el evaluador te pedirá que le enseñes el código del `select/poll`. Busca estas líneas antes de la defensa:
+
+1. Dónde está el bucle principal (`while (true)`).
+2. Dónde llamas a `poll()` o `select()`.
+3. Demuestra que compruebas `POLLIN` y `POLLOUT` (lectura y escritura) a través de los bitmasks.
+4. Demuestra que solo haces **un** `read` o `write` por ciclo para no bloquear el servidor.
+
+¡Con esto y el arreglo del CGI que hemos hecho hoy, lo tienes hecho! 🚀

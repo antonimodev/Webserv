@@ -68,4 +68,8 @@ t: re
 	@clear
 	@./webserv ./conf/test.conf || 2>/dev/null
 
+t2: re
+	@clear
+	@valgrind ./webserv ./conf/test.conf || 2>/dev/null
+
 .PHONY: all clean fclean re

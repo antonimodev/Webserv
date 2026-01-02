@@ -10,6 +10,7 @@
 class CgiHandler {
     private:
         std::map<std::string, std::string>  _env;
+        std::string                         _body;
 
         CgiHandler(const CgiHandler&);
         CgiHandler& operator=(const CgiHandler&);

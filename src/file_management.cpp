@@ -114,6 +114,8 @@ std::string	load_resource(const std::string& full_path, const std::string& route
 	std::string body;
 	std::string content_type;
 
+	std::cout << "\nfull path: " << full_path << std::endl;
+
 	// -------- file exists? keep info if its a directory or file
 	if (stat(full_path.c_str(), &info) != 0)
 		throw HttpCodeException(NOT_FOUND, "Error: file not found");

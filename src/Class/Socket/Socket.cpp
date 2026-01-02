@@ -8,7 +8,7 @@
 #include "Socket.hpp"
 
 
-Socket::Socket(const std::string& ip, int port) : _fd(-1) {
+Socket::Socket(const std::string& ip, int port) : _fd(-1), _ip(ip), _port(port){
 	_fd = createSocket(AF_INET, SOCK_STREAM, 0);
 	setNonBlocking(_fd);
 	setSocketMode(_fd, SO_REUSEADDR);
@@ -36,6 +36,16 @@ Socket::~Socket(void) {
 
 
 // PRIVATE STATIC - Helper functions
+
+int	Socket::getPort(void) const {
+	return _port;
+}
+
+const std::string	Socket::getIp(void) const {
+	return _ip;
+}
+
+
 int Socket::createSocket(int domain, int type, int protocol) {
 	int socket_fd = socket(domain, type, protocol);
 

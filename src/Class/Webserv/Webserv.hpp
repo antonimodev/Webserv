@@ -85,7 +85,6 @@ class Webserv {
 		ServerConfig*	getServerByHost(int server_socket_fd, std::string& host_header);
 		ServerConfig*	getClientServerConfig(const HttpRequest& request, ClientState& client);
 
-		// Disable copy (Rule of Three - Webserv manages dynamic resources)
 		Webserv(const Webserv&);
 		Webserv& operator=(const Webserv&);
 

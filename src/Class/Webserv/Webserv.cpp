@@ -25,7 +25,8 @@
 
 #include <algorithm>
 
-ClientState::ClientState() 
+
+ClientState::ClientState()
 		:	_server_socket_fd(-1),
 			_server_config(NULL),
 			_response_ready(false),
@@ -34,14 +35,34 @@ ClientState::ClientState()
 			_cgi_pipe_fd(-1) {}
 
 
-Webserv::Webserv(const char* conf_file) {
+/* ORIGINAL Webserv::Webserv(const char* conf_file) {
 	ConfParser parser(conf_file);
 	_servers = parser.getServers();
 
 	for (size_t i = 0; i < _servers.size(); ++i)
 		addSocket(_servers[i].host, _servers[i].listen_port);
-}
+} */
 
+
+Webserv::Webserv(const char* conf_file) {
+	ConfParser parser(conf_file);
+	_servers = parser.getServers();
+
+	for (size_t i = 0; i < _servers.size(); ++i) {
+		bool socket_exists = false;
+
+		for (size_t j = 0; j < _server_sockets.size(); ++j) {
+			if (_server_sockets[j]->getPort() == _servers[i].listen_port &&
+				_server_sockets[j]->getIp() == _servers[i].host) {
+				socket_exists = true;
+				break;
+			}
+		}
+
+		if (!socket_exists)
+			addSocket(_servers[i].host, _servers[i].listen_port);
+	}
+}
 
 Webserv::Webserv(const Webserv& other) {
 	(void)other;
@@ -300,6 +321,9 @@ static std::string handleStaticRequest(const HttpRequest& request, LocationConfi
 
 	if (method == "GET") {
 		std::string index_file = getIndexFile(location, config);
+
+		std::cout << "index_file = " << index_file << std::endl;
+
 		return load_resource(full_path, request.route, location->autoindex, index_file);
 	}
 	else if (method == "POST") {
@@ -327,7 +351,7 @@ static std::string handleStaticRequest(const HttpRequest& request, LocationConfi
 // REQUEST PROCESSING
 // ═══════════════════════════════════════════════════════════════════
 
-ServerConfig* Webserv::getServerByHost(int server_socket_fd, std::string& host_header) {
+/* ORIGINAL ServerConfig* Webserv::getServerByHost(int server_socket_fd, std::string& host_header) {
 	std::vector<ServerConfig*> candidates;
 	std::string hostName;
 
@@ -356,6 +380,47 @@ ServerConfig* Webserv::getServerByHost(int server_socket_fd, std::string& host_h
 	}
 
 	return candidates[0];
+} */
+
+ServerConfig* Webserv::getServerByHost(int server_socket_fd, std::string& host_header) {
+    std::vector<ServerConfig*> candidates;
+
+    int port = -1;
+    std::string ip = "";
+    
+    for (size_t i = 0; i < _server_sockets.size(); ++i) {
+        if (_server_sockets[i]->getSocketFd() == server_socket_fd) {
+            port = _server_sockets[i]->getPort();
+            ip = _server_sockets[i]->getIp();
+            break;
+        }
+    }
+
+    for (size_t i = 0; i < _servers.size(); ++i) {
+        if (_servers[i].listen_port == port && _servers[i].host == ip) {
+            candidates.push_back(&_servers[i]);
+        }
+    }
+
+    if (candidates.empty())
+        return NULL;
+
+    std::string hostName;
+    size_t colon_pos = host_header.find(":");
+    if (colon_pos != std::string::npos)
+        hostName = host_header.substr(0, colon_pos);
+    else
+        hostName = host_header;
+
+    for (size_t i = 0; i < candidates.size(); ++i) {
+        for (size_t j = 0; j < candidates[i]->server_names.size(); ++j) {
+            if (candidates[i]->server_names[j] == hostName) {
+                return candidates[i];
+            }
+        }
+    }
+
+    return candidates[0];
 }
 
 ServerConfig* Webserv::getClientServerConfig(const HttpRequest& request, ClientState& client) {

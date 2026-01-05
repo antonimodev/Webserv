@@ -155,15 +155,6 @@ bool	Webserv::isCgiRequest(const std::string& full_path, const std::pair<std::st
 }
 
 
-/* ServerConfig* Webserv::getServerBySocketFd(int socket_fd) {
-	for (size_t i = 0; i < _server_sockets.size(); ++i) {
-		if (_server_sockets[i]->getSocketFd() == socket_fd)
-			return &_servers[i];
-	}
-	return NULL;
-} */
-
-
 void	Webserv::disconnectClient(size_t& idx) {
 	int client_fd = _poll_vector[idx].fd;
 

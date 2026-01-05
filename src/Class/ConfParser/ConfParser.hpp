@@ -1,136 +1,69 @@
 #pragma once
 
-#include <sstream>
-#include <stack>
-#include <vector>
 #include <map>
 #include <string>
 
-/**
- * @brief Configuration for a location block
- */
-struct LocationConfig {
-	std::string							path;
-	std::vector<std::string>        	allowed_methods;
-	std::string 				   		index;
-	std::string                     	root;
-	std::string                     	upload_path;
-	bool                            	autoindex;
-	std::pair<std::string, std::string> cgi_extension;
-	std::pair<int, std::string>			redirect;
-	
-	LocationConfig(void);
-	LocationConfig(std::string path);
-};
+#include "Parser.hpp"
 
-/**
- * @brief Configuration for a server block
- */
-struct ServerConfig {
-	std::vector<std::string>				server_names; // changed to vector
-	int										listen_port;
-	std::string								host;
-	std::string								root;
-	std::string								index;
-	size_t									client_max_body_size;
-	std::map<int, std::string>				error_pages;
-	std::map<std::string, LocationConfig>	locations;
+// CGI -> Common Gateway Interface
 
-	ServerConfig(void);
-};
-
-
-// ═════════════════════════════════════════════════════════
-// HELPER FUNCTIONS (handlers doesn't need object state)
-// ═════════════════════════════════════════════════════════
-
-// Server handlers
-void	handleServerName(const std::string& value, ServerConfig& config);
-void	handleListen(const std::string& value, ServerConfig& config);
-void	handleHost(const std::string& value, ServerConfig& config);
-void	handleRoot(const std::string& value, ServerConfig& config);
-void	handleIndex(const std::string& value, ServerConfig& config);
-void	handleClientMaxBodySize(const std::string& value, ServerConfig& config);
-void	handleErrorPage(const std::string& value, ServerConfig& config);
-
-// Location handlers
-void	handleAllowedMethods(const std::string& value, LocationConfig& location);
-void	handleLocationRoot(const std::string& value, LocationConfig& location);
-void	handleLocationIndex(const std::string& value, LocationConfig& location);
-void	handleUploadPath(const std::string& value, LocationConfig& location);
-void	handleAutoindex(const std::string& value, LocationConfig& location);
-void	handleCgiExtension(const std::string& value, LocationConfig& location);
-void	handleReturn(const std::string& value, LocationConfig& location);
-
-
-/** ════════════════════════════════════════════════════════════════════
- * @brief Parser for NGINX-style configuration files
- */
-
-class ConfParser {
+class CgiHandler {
 	private:
-		std::stack<std::string>		_brackets;
-		std::vector<ServerConfig>	_servers;
-		std::string					_current_location_path;
+		std::map<std::string, std::string>  _env;
 
-		// Typedefs for handlers
-		typedef void	(*ServerHandler)(const std::string&, ServerConfig&);
-		typedef void	(*LocationHandler)(const std::string&, LocationConfig&);
+		CgiHandler(const CgiHandler&);
+		CgiHandler& operator=(const CgiHandler&);
 
-		// Maps for handlers
-		std::map<std::string, ServerHandler>	_serverHandlers;
-		std::map<std::string, LocationHandler>	_locationHandlers;
-		
-		void	initHandlers(void);
 		/**
-		 * @brief Converts raw content into a vector of tokens.
-		 * @param buffer The configuration file content.
-		 * @return Vector of parsed tokens.
+		 * @brief Get the Header object
+		 * 
+		 * @param request 
+		 * @param key 
+		 * @return std::string 
 		 */
-		std::vector<std::string> tokenizeContent(const std::string& buffer);
+		std::string getHeader(const HttpRequest& request, const std::string& key);
+
 		/**
-		 * @brief Processes a single token and applies appropriate handler.
-		 * @param token The current token to parse.
-		 * @param content The complete token vector for context.
-		 * @param i Reference to current position in token vector.
+		 * @brief Set the Script Info object
+		 * 
+		 * @param route 
+		 * @param full_path 
+		 * @param cgi_ext 
 		 */
-		void	parseToken(const std::string& token, const std::vector<std::string>& content, size_t& i);
-		/**
-		 * @brief Stores a token value and advances to next directive.
-		 * @param token The token to store.
-		 * @param content The complete token vector for context.
-		 * @param i Reference to current position in token vector.
-		 */
-		void	saveToken(std::string token, const std::vector<std::string>& content, size_t& i);
-		/**
-		 * @brief Validates all parsed server configurations.
-		 * @throws ParseException if validation fails.
-		 */
-		void	validateServers(void);
+		void        setScriptInfo(const std::string& route, const std::string& full_path, const std::string& cgi_ext);
 
 	public:
-		ConfParser(void);
+		/**
+		 * @brief Construct a new Cgi Handler object. Also sets up CGI environment variables.
+		 * 
+		 * @param request 
+		 * @param full_path 
+		 * @param cgi_extension 
+		 */
+		CgiHandler(const HttpRequest& request, const std::string& full_path, std::pair<std::string, std::string> cgi_extension);
+		~CgiHandler(void);
 
 		/**
-		 * @brief Constructs and parses a configuration file.
-		 * @param fileName Path to the configuration file.
-		 * @throws ParseException if file cannot be opened or parsed.
-		 */
-		ConfParser(const char* fileName);
-		~ConfParser(void);
-		ConfParser(const ConfParser& other);
-		ConfParser& operator=(const ConfParser& other);
+		* @brief Executes a CGI script in a child process
+		* 
+		* This function forks a new process to execute the CGI script using the
+		* appropriate interpreter based on the CGI extension. It sets up the
+		* environment variables and handles the execution of the CGI program.
+		* 
+		* @param pid Reference to store the process ID of the child process
+		* @param cgi_extension Pair containing the CGI extension and its interpreter path
+		* @return int File descriptor for reading the CGI output, or -1 on error
+		*/
+		int executeCgi(pid_t& pid, std::pair<std::string, std::string>& cgi_extension);
 
 		/**
-		 * @brief Parses a configuration file.
-		 * @param fileName Path to the configuration file.
-		 * @throws ParseException if file cannot be opened or parsed.
+		 * @brief Process the CGI response content
+		 * 
+		 * This function processes the raw output from the CGI script, separating
+		 * headers from the body and formatting it appropriately for HTTP response.
+		 * 
+		 * @param content Raw output from the CGI script
+		 * @return std::string Formatted HTTP response content
 		 */
-		void	parseFile(const char* fileName);
-		/**
-		 * @brief Returns the parsed server configurations.
-		 * @return Constant reference to the vector of ServerConfig structures.
-		 */
-		const std::vector<ServerConfig>& getServers(void) const;
-		void	printServers(void);
+		static std::string  process_response(const std::string& content);
 };

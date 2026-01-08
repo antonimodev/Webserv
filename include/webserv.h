@@ -6,19 +6,16 @@
 #include <sys/types.h>
 
 
-// --- FILE MANAGEMENT ---
-
-namespace webserv {
-	/**
-	 * @brief Generates HTML directory listing.
-	 * @param path Filesystem path to directory.
-	 * @param route HTTP route for href generation.
-	 * @return HTML string with directory contents.
-	 */
-	std::string get_directory_list(const std::string& path, const std::string& route);
-}
-
 enum FdType {SOCKET, PIPE};
+
+// --- FILE MANAGEMENT ---
+/**
+ * @brief Generates HTML directory listing.
+ * @param path Filesystem path to directory.
+ * @param route HTTP route for href generation.
+ * @return HTML string with directory contents.
+ */
+std::string get_directory_list(const std::string& path, const std::string& route);
 
 /**
  * @brief Reads entire file contents into string.
@@ -36,7 +33,19 @@ std::string get_file_content(const std::string& path);
  */
 std::string	get_fd_content(int fd);
 
-ssize_t	readFd(int fd, std::string& buffer, FdType type);
+/**
+ * @brief Reads data from a file descriptor into a buffer.
+ *
+ * Reads available data from the given file descriptor (either a socket or a pipe)
+ * and appends it to the provided buffer string. The type of file descriptor is
+ * specified by the @p type parameter.
+ *
+ * @param fd File descriptor to read from.
+ * @param buffer Reference to a string where the read data will be appended.
+ * @param type Type of file descriptor (SOCKET or PIPE).
+ * @return Number of bytes read, or -1 on error.
+ */
+ssize_t readFd(int fd, std::string& buffer, FdType type);
 
 /**
  * @brief Extracts file extension from path.
@@ -83,15 +92,6 @@ std::string delete_resource(const std::string& path);
 
 
 // --- UTILITIES ---
-
-/**
- * @brief Splits string by delimiter.
- * @param text Input string.
- * @param delimiter Delimiter string.
- * @return Vector of substrings.
- * @throws std::runtime_error if delimiter not found.
- */
-std::vector<std::string> split(const std::string& text, const std::string& delimiter);
 
 /**
  * @brief Trims leading/trailing spaces.

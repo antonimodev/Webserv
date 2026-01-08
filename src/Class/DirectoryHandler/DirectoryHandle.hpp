@@ -4,7 +4,6 @@
 #include <string>
 #include <stdexcept>
 
-namespace webserv {
 
 /**
  * @brief RAII wrapper for DIR* to ensure proper resource cleanup.
@@ -14,8 +13,6 @@ namespace webserv {
 class DirectoryHandle {
 	private:
 		DIR*	_directory;
-
-		// Private because it wont be used, and don't need named params in this case
 
 		DirectoryHandle(const DirectoryHandle&);
 		DirectoryHandle& operator=(const DirectoryHandle&);
@@ -38,5 +35,4 @@ class DirectoryHandle {
 		 * @return DIR* pointer managed by this guard.
 		 */
 		DIR* getDirectory(void) const;
-	};
-}
+};

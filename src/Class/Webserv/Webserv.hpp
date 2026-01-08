@@ -1,16 +1,10 @@
 #pragma once
 
-// CONTAINERS
 #include <vector>
 #include <map>
-
-//
-#include <poll.h> // poll()
-
-//
-#include <sstream> // std::ostringstream
-
-#include <ctime> // time_t
+#include <poll.h>
+#include <sstream>
+#include <ctime>
 
 #include "webserv.h"
 #include "Parser.hpp"
@@ -202,7 +196,6 @@ class Webserv {
 		void		processClientRequest(size_t& idx);
 		void		setPollEvent(int fd, short event);
 
-		// added
 		void			handleRedirect(int client_fd, int code, const std::string& url);
 		ServerConfig*	getServerByHost(int server_socket_fd, std::string& host_header);
 		ServerConfig*	getClientServerConfig(const HttpRequest& request, ClientState& client);

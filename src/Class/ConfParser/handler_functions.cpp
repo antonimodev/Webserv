@@ -2,15 +2,16 @@
 #include <set>
 
 #include "ConfParser.hpp"
+
 #include "ParseException.hpp"
 
 
 struct AllowedMethods {
 	static bool isValid(const std::string& method) {
-		return	method == "GET" ||
-				method == "POST" ||
-				method == "DELETE" ||
-				method == "PUT";
+		return	method == "GET"
+			||	method == "POST"
+			||	method == "DELETE"
+			||	method == "PUT";
 	}
 };
 
@@ -72,6 +73,7 @@ void	handleClientMaxBodySize(const std::string& value, ServerConfig& config) {
 
 	size_t num;
 	std::istringstream numStream(sizeStr);
+
 	if (!(numStream >> num))
 		throw ParseException("Invalid client_max_body_size: " + value);
 
@@ -81,12 +83,12 @@ void	handleClientMaxBodySize(const std::string& value, ServerConfig& config) {
 
 void	handleErrorPage(const std::string& value, ServerConfig& config) {
 	std::istringstream iss(value);
-	int errorCode;
 	std::string path;
-	
+	int errorCode;
+
 	if (!(iss >> errorCode >> path))
 		throw ParseException("Invalid error_page format: " + value);
-	
+
 	config.error_pages[errorCode] = path;
 }
 
@@ -108,9 +110,11 @@ void	handleAllowedMethods(const std::string& value, LocationConfig& location) {
 		throw ParseException("allowed_methods cannot be empty");
 }
 
+
 void	handleLocationIndex(const std::string& value, LocationConfig& location) {
 	location.index = value;
 }
+
 
 void	handleLocationRoot(const std::string& value, LocationConfig& location) {
 	location.root = value;
@@ -135,10 +139,10 @@ void	handleAutoindex(const std::string& value, LocationConfig& location) {
 void	handleCgiExtension(const std::string& value, LocationConfig& location) {
 	std::istringstream iss(value);
 	std::string extension, path;
-	
+
 	if (!(iss >> extension >> path))
 		throw ParseException("Invalid cgi_extension format: " + value);
-	
+
 	location.cgi_extension = std::make_pair(extension, path);
 }
 
@@ -147,9 +151,9 @@ void	handleReturn(const std::string& value, LocationConfig& location) {
 	std::istringstream iss(value);
 	int code;
 	std::string url;
-	
+
 	if (!(iss >> code >> url))
 		throw ParseException("Invalid return format: " + value);
-	
+
 	location.redirect = std::make_pair(code, url);
 }

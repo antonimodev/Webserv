@@ -5,6 +5,7 @@
 
 #include "ExecveBuilder.hpp"
 
+
 // CONSTRUCTORS
 
 ExecveBuilder::ExecveBuilder(const std::map<std::string, std::string> env_map) {
@@ -12,7 +13,7 @@ ExecveBuilder::ExecveBuilder(const std::map<std::string, std::string> env_map) {
 
 	size_t i = 0;
 	std::map<std::string, std::string>::const_iterator it;
-	
+
 	for (it = env_map.begin(); it != env_map.end(); ++it) {
 		std::string tmp = it->first + "=" + it->second;
 		_matrix[i] = new char[tmp.size() + 1];
@@ -34,6 +35,7 @@ ExecveBuilder::ExecveBuilder(const std::vector<std::string> argv) {
 	_matrix[argv.size()] = NULL;
 }
 
+
 ExecveBuilder::~ExecveBuilder(void) {
 	if (_matrix) {
 		for (size_t i = 0; _matrix[i]; ++i)
@@ -44,7 +46,6 @@ ExecveBuilder::~ExecveBuilder(void) {
 
 
 // PUBLIC METHODS
-
 
 char** ExecveBuilder::get(void) const {
 	return _matrix;

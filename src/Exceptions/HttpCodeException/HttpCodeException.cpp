@@ -1,7 +1,9 @@
-#include "HttpCodeException.hpp"
-#include <sstream>
-#include "webserv.h"
 #include <iostream>
+#include <sstream>
+
+#include "webserv.h"
+
+#include "HttpCodeException.hpp"
 
 
 HttpCodeException::HttpCodeException(HttpStatus code, const std::string& log_msg)
@@ -9,6 +11,7 @@ HttpCodeException::HttpCodeException(HttpStatus code, const std::string& log_msg
 
 
 // PRIVATE
+
 const char* HttpCodeException::statusToString(HttpStatus status) const {
 	switch (status) {
 		case BAD_REQUEST:			return "400 Bad Request";
@@ -21,6 +24,7 @@ const char* HttpCodeException::statusToString(HttpStatus status) const {
 		default:					return "500 Internal Server Error";
 	}
 }
+
 
 std::string HttpCodeException::getErrorHtml(const ServerConfig* config) const {
 	std::map<int, std::string>::const_iterator it = config->error_pages.find(_status);
@@ -35,26 +39,26 @@ std::string HttpCodeException::getErrorHtml(const ServerConfig* config) const {
 	return "";
 }
 
+
 static std::string getDefaultErrorHtml(const char* status) {
         std::ostringstream oss;
         oss << "<html><body><h1>" << status << "</h1></body></html>";
         return oss.str();
 }
 
+
 // PUBLIC
+
 std::string HttpCodeException::httpResponse(const ServerConfig* config) const {
     const char* status = statusToString(_status);
     std::string body;
 
-    // --------- search for _status in error_pages map in ServerConfig
     if (config)
 		body = getErrorHtml(config);
 
-    // ------- generic HTML if no custom page loaded on server config
     if (body.empty())
 		body = getDefaultErrorHtml(status);
 
-	// ------- set the requested html body to the response
     std::ostringstream response;
 
     response	<< "HTTP/1.1 " << status << "\r\n"
@@ -64,4 +68,3 @@ std::string HttpCodeException::httpResponse(const ServerConfig* config) const {
 
     return response.str();
 }
-

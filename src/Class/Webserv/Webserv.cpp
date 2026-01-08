@@ -1,13 +1,11 @@
+#include <algorithm>
 #include <sys/socket.h>
 #include <netinet/in.h>
-
 #include <iostream>
 #include <unistd.h>
-
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-
 #include <cstdio>
 #include <map>
 
@@ -23,8 +21,6 @@
 #include "PendingRequestException.hpp"
 #include "ParseException.hpp"
 
-#include <algorithm>
-
 
 ClientState::ClientState()
 		:	_server_socket_fd(-1),
@@ -33,15 +29,6 @@ ClientState::ClientState()
 			_last_active(time(NULL)),
 			_cgi_pid(-1),
 			_cgi_pipe_fd(-1) {}
-
-
-/* ORIGINAL Webserv::Webserv(const char* conf_file) {
-	ConfParser parser(conf_file);
-	_servers = parser.getServers();
-
-	for (size_t i = 0; i < _servers.size(); ++i)
-		addSocket(_servers[i].host, _servers[i].listen_port);
-} */
 
 
 Webserv::Webserv(const char* conf_file) {
@@ -63,6 +50,7 @@ Webserv::Webserv(const char* conf_file) {
 			addSocket(_servers[i].host, _servers[i].listen_port);
 	}
 }
+
 
 Webserv::Webserv(const Webserv& other) {
 	(void)other;
@@ -180,7 +168,7 @@ void	Webserv::cleanupCgiProcess(int client_fd) {
 	_client_map[client_fd]._cgi_pid = -1;
 }
 
-// added
+
 void Webserv::handleRedirect(int client_fd, int code, const std::string& url) {
 	std::ostringstream response;
 	std::string status_message;
@@ -208,6 +196,7 @@ void Webserv::handleRedirect(int client_fd, int code, const std::string& url) {
 			<< client_fd << " -> " << url << std::endl;
 }
 
+
 void	Webserv::checkTimeout(void) {
 	time_t current_time = time(NULL);
 
@@ -231,10 +220,10 @@ void	Webserv::checkTimeout(void) {
 	}
 }
 
+
 // ═══════════════════════════════════════════════════════════════════
 // REQUEST PROCESSING HELPERS (static)
-// ═══════════════════════════════════════════════════════════════════
-
+// ═══════════════════════════════════════════════════════════════════+
 
 static LocationConfig* findLocation(const std::string& route, ServerConfig* config) {
 	std::string match;
@@ -264,9 +253,8 @@ static bool isAllowedMethod(const std::string& method, const std::vector<std::st
 
 static void validateBodySize(const HttpRequest& request, const ServerConfig* config) {
 	if (config->client_max_body_size == 0)
-		return; // No limit configured
+		return;
 
-	// Body already parsed by Parser, just check size
 	if (request.body.size() > config->client_max_body_size)
 		throw HttpCodeException(PAYLOAD_LARGE, "Error: Payload too large");
 }
@@ -284,7 +272,6 @@ static std::string buildFullPath(const std::string& route, LocationConfig* locat
 		remaining_path = route;
 	}
 
-	// Ensure separator between paths
 	if (!base_path.empty() && base_path[base_path.length() - 1] != '/' &&
 		!remaining_path.empty() && remaining_path[0] != '/')
 		return base_path + "/" + remaining_path;
@@ -324,7 +311,7 @@ static std::string handleStaticRequest(const HttpRequest& request, LocationConfi
 			std::string filename = extract_filename(request.route);
 			std::string upload_path = location->upload_path;
 
-			if(upload_path[upload_path.size() - 1] != '/')
+			if (upload_path[upload_path.size() - 1] != '/')
 				upload_path += "/";
 
 			return save_resource(upload_path + filename, request.body);
@@ -337,47 +324,12 @@ static std::string handleStaticRequest(const HttpRequest& request, LocationConfi
 }
 
 
-// ═══════════════════════════════════════════════════════════════════
-// REQUEST PROCESSING
-// ═══════════════════════════════════════════════════════════════════
-
-/* ORIGINAL ServerConfig* Webserv::getServerByHost(int server_socket_fd, std::string& host_header) {
-	std::vector<ServerConfig*> candidates;
-	std::string hostName;
-
-	size_t colon_pos = host_header.find(":");
-	if (colon_pos == std::string::npos)
-		hostName = host_header;
-	else
-		hostName = host_header.substr(0, colon_pos);
-
-	// -------- keep all the servers with the same listening socket
-	for (size_t i = 0; i < _server_sockets.size(); ++i) {
-		if (_server_sockets[i]->getSocketFd() == server_socket_fd)
-			candidates.push_back(&_servers[i]);
-	}
-
-	if (candidates.empty())
-		return NULL;
-
-	for (size_t i = 0; i < candidates.size(); ++i) {
-		// -------- look for the server with the same hostName
-		for (size_t j = 0; j < candidates[i]->server_names.size(); ++j) {
-			if (candidates[i]->server_names[j] == hostName) {
-				return candidates[i];
-			}
-		}
-	}
-
-	return candidates[0];
-} */
-
 ServerConfig* Webserv::getServerByHost(int server_socket_fd, std::string& host_header) {
     std::vector<ServerConfig*> candidates;
 
     int port = -1;
     std::string ip = "";
-    
+
     for (size_t i = 0; i < _server_sockets.size(); ++i) {
         if (_server_sockets[i]->getSocketFd() == server_socket_fd) {
             port = _server_sockets[i]->getPort();
@@ -413,6 +365,7 @@ ServerConfig* Webserv::getServerByHost(int server_socket_fd, std::string& host_h
     return candidates[0];
 }
 
+
 ServerConfig* Webserv::getClientServerConfig(const HttpRequest& request, ClientState& client) {
 	std::string host_header;
 	std::map<std::string, std::string>::const_iterator it = request.headers.find("Host");
@@ -420,15 +373,14 @@ ServerConfig* Webserv::getClientServerConfig(const HttpRequest& request, ClientS
 	if (it != request.headers.end())
 		host_header = it->second;
 
-	// 					  example : getServerByHost(2, "servername.com")
 	ServerConfig* selected_server =	getServerByHost(client._server_socket_fd, host_header);
 
 	if (!selected_server)
 		throw HttpCodeException(INTERNAL_ERROR, "Error: no server found");
 
 	return selected_server;
-
 }
+
 
 void	Webserv::processClientRequest(size_t& idx) {
 	const int client_fd = _poll_vector[idx].fd;
@@ -439,13 +391,10 @@ void	Webserv::processClientRequest(size_t& idx) {
 
 		const HttpRequest& request = client._http_request;
 
-		// added
 		client._server_config = getClientServerConfig(request, client);
 
-		// Validate body size against server config
 		validateBodySize(request, client._server_config);
 
-		// Find matching location
 		LocationConfig* location = findLocation(request.route, client._server_config);
 		
 		if (location == NULL)
@@ -457,14 +406,11 @@ void	Webserv::processClientRequest(size_t& idx) {
 			return;
 		}
 
-		// Validate method is allowed
 		if (!isAllowedMethod(request.method, location->allowed_methods))
 			throw HttpCodeException(METHOD_NOT_ALLOWED, "Error: method not allowed");
 
-		// Build filesystem path for CGI check
 		std::string full_path = buildFullPath(request.route, location, client._server_config);
 
-		// Handle CGI requests
 		if (isCgiRequest(full_path, location->cgi_extension)) {
 			CgiHandler cgi(request, full_path, location->cgi_extension);
 			int pipe_fd = cgi.executeCgi(client._cgi_pid, location->cgi_extension);
@@ -477,7 +423,6 @@ void	Webserv::processClientRequest(size_t& idx) {
 			return;
 		}
 
-		// Handle static requests
 		client._response_buffer = handleStaticRequest(request, location, client._server_config);
 		client._response_ready = true;
 		setPollEvent(client_fd, POLLOUT);
@@ -498,7 +443,6 @@ void	Webserv::processClientRequest(size_t& idx) {
 // EVENT HANDLERS
 // ═══════════════════════════════════════════════════════════════════
 
-
 void	Webserv::handleNewConnection(int socket_fd) {
 	struct sockaddr_in address;
 	socklen_t socklen = sizeof(address);
@@ -512,7 +456,6 @@ void	Webserv::handleNewConnection(int socket_fd) {
 
 	addPollEvent(agent, POLLIN);
 	_client_map[agent] = ClientState();
-	//_client_map[agent]._server_config = getServerBySocketFd(socket_fd); -> stored later in processClientRequest
 	_client_map[agent]._server_socket_fd = socket_fd;
 	std::cout << "New client connected: " << agent << std::endl;
 }
@@ -614,7 +557,6 @@ void	Webserv::handleSendEvent(size_t& idx) {
 // ═══════════════════════════════════════════════════════════════════
 // MAIN LOOP
 // ═══════════════════════════════════════════════════════════════════
-
 
 void	Webserv::runServer(void) {
 	for (size_t i = 0; i < _server_sockets.size(); ++i)

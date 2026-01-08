@@ -2,45 +2,36 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-
 #include <sys/socket.h>
-
 #include <vector>
-
 #include <dirent.h>
-
 #include <cstdio>
 #include <sys/stat.h>
+#include <cerrno>
 
 #include "DirectoryHandle.hpp"
 #include "webserv.h"
-#include <cerrno>
 
 #include "HttpCodeException.hpp"
 
 
-namespace webserv {
+std::string	get_directory_list(const std::string& path, const std::string& route) {
+	DirectoryHandle dir(path);
 
-	std::string	get_directory_list(const std::string& path, const std::string& route) {
-		webserv::DirectoryHandle dir(path);
+	std::string html_body = "<body><h1>Index of " + route + "</h1>\n";
+	struct dirent* directoryItem;
 
-		std::string html_body = "<body><h1>Index of " + route + "</h1>\n";
-		struct dirent* directoryItem;
+	while ((directoryItem = readdir(dir.getDirectory())) != NULL) {
+		std::string fileName = directoryItem->d_name;
 
-		// -------- iterate through directory entries
-		while ((directoryItem = readdir(dir.getDirectory())) != NULL) {
-			std::string fileName = directoryItem->d_name;
+		if (fileName == "." || fileName == "..") 
+			continue;
 
-			if (fileName == "." || fileName == "..") 
-				continue;
-
-			html_body += "<a href=\"" + fileName + "\">" + fileName + "</a>\n";
-		}
-
-		html_body.append("</body>");
-		return html_body;
+		html_body += "<a href=\"" + fileName + "\">" + fileName + "</a>\n";
 	}
 
+	html_body.append("</body>");
+	return html_body;
 }
 
 
@@ -58,8 +49,9 @@ std::string	get_file_content(const std::string& path) {
 	return content;
 }
 
+
 std::string	get_fd_content(int fd) {
-	char		buffer[4096]; // standard
+	char		buffer[4096];
 	ssize_t		bytes_read;
 	std::string	content;
 	
@@ -95,7 +87,6 @@ std::string	get_extension(const std::string& route) {
 	std::string::size_type dot_pos = route.rfind('.');
 	std::string::size_type slash_pos = route.rfind('/');
 
-	// No dot found, or dot is before the last slash (e.g., "/folder.d/file.html")
 	if (dot_pos == std::string::npos)
 		return "";
 	if (slash_pos != std::string::npos && dot_pos < slash_pos)
@@ -107,7 +98,6 @@ std::string	get_extension(const std::string& route) {
 
 // --- Resource management ---
 
-
 std::string	load_resource(const std::string& full_path, const std::string& route, bool autoindex, const std::string& index_file) {
 	struct stat info;
 
@@ -116,33 +106,26 @@ std::string	load_resource(const std::string& full_path, const std::string& route
 
 	std::cout << "\nfull path: " << full_path << std::endl;
 
-	// -------- file exists? keep info if its a directory or file
 	if (stat(full_path.c_str(), &info) != 0)
 		throw HttpCodeException(NOT_FOUND, "Error: file not found");
 
-	// -------- it's a directory? serve index or generate listing page
 	if (S_ISDIR(info.st_mode)) {
 		std::string index_path = full_path;
 
-		// --------  example: /var/www/html ->  /var/www/html/ , we need the '/' :)
 		if (!index_path.empty() && index_path[index_path.size() - 1] != '/')
 			index_path += "/";
 
-		// -------- example: /var/www/html/ + index.html
 		index_path += index_file;
 
-		// -------- if its a directory and has index file, serve it
 		if (stat(index_path.c_str(), &info) == 0) {
 			body = get_file_content(index_path);
 			content_type = "text/html";
 		} else if (autoindex) {
-			// -------- no index file huh? generate directory listing...
-			body = webserv::get_directory_list(full_path, route);
+			body = get_directory_list(full_path, route);
 			content_type = "text/html";
 		} else
 			throw HttpCodeException(FORBIDDEN, "Error: directory listing denied");
 	} else {
-		// -------- it's a file, load content
 		body = get_file_content(full_path);
 		content_type = get_mime_type(get_extension(full_path));
 	}
@@ -189,7 +172,7 @@ std::string	save_resource(const std::string& full_path, const std::string& body)
 	if (file.fail())
 		throw HttpCodeException(INTERNAL_ERROR, "Error: failed to write file content");
 
-	// HARDCODED CONTENT-LEGTH
+	// HARDCODED CONTENT-LEGTH (REVISAR)
 	return "HTTP/1.1 201 Created\r\n"
 		"Content-Length: 0 \r\n"
 		"\r\n";
@@ -197,26 +180,6 @@ std::string	save_resource(const std::string& full_path, const std::string& body)
 
 
 // --- UTILITIES ---
-
-
-std::vector<std::string> split(const std::string& text, const std::string& delimiter) {
-	std::vector<std::string> words;
-	size_t pos = 0;
-
-	pos = text.find(delimiter);
-	if (pos == std::string::npos)
-		throw std::runtime_error("Error: delimiter not finded"); // Change throw type
-
-	size_t pivot = 0;
-	while (pos != std::string::npos) {
-		words.push_back(text.substr(pivot, pos - pivot));
-		pivot = pos + delimiter.size();
-		pos = text.find(delimiter, pivot);
-	}
-	words.push_back(text.substr(pivot));
-	return words;
-}
-
 
 std::string trim_space(const std::string& text) {
 	size_t start = text.find_first_not_of(' ');

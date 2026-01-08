@@ -6,6 +6,7 @@
 #include <map>
 #include <string>
 
+
 /**
  * @brief Configuration for a location block
  */
@@ -73,11 +74,9 @@ class ConfParser {
 		std::vector<ServerConfig>	_servers;
 		std::string					_current_location_path;
 
-		// Typedefs for handlers
 		typedef void	(*ServerHandler)(const std::string&, ServerConfig&);
 		typedef void	(*LocationHandler)(const std::string&, LocationConfig&);
 
-		// Maps for handlers
 		std::map<std::string, ServerHandler>	_serverHandlers;
 		std::map<std::string, LocationHandler>	_locationHandlers;
 		

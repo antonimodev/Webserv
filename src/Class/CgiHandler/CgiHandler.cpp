@@ -75,6 +75,7 @@ void	CgiHandler::setScriptInfo(const std::string& route, const std::string& full
     }
 }
 
+
 // PUBLIC
 
 std::string CgiHandler::process_response(const std::string& content) {
@@ -101,38 +102,6 @@ std::string CgiHandler::process_response(const std::string& content) {
 	return oss.str();
 }
 
-// objective: [0] /usr/bin/php-cgi [1] script.php [2] NULL
-// probably use route instead send httpRequest
-/* int	CgiHandler::executeCgi(pid_t& pid, std::pair<std::string, std::string>& cgi_extension) {
-	std::vector<std::string> args;
-
-	args.push_back(cgi_extension.second);
-	args.push_back(_env["SCRIPT_FILENAME"]);
-
-	ExecveBuilder	env_builder(_env); // receives map
-	ExecveBuilder	arg_builder(args); // receives vector
-
-	try {
-		Pipe pipes;
-
-		pid_t child = fork();
-		pid = child;
-
-		if (child == 0) {
-			pipes.fdRedirection(STDOUT_FILENO, Pipe::WRITE);
-			execve(args[0].c_str(), arg_builder.get(), env_builder.get());
-
-			throw CgiException("Error: execve failed in CGI child process");
-		}
-
-		pipes.closeWritePipe();
-		return pipes.fdRelease(Pipe::READ);
-
-	} catch (const PipeException& e) {
-		std::cerr << e.what() << std::cout; // not sure about this catch
-		return -1;
-	}
-} */
 
 int CgiHandler::executeCgi(pid_t& pid, std::pair<std::string, std::string>& cgi_extension) {
     std::vector<std::string> args;

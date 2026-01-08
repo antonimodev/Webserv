@@ -1,11 +1,11 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
-
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "SocketException.hpp"
 #include "Socket.hpp"
+
+#include "SocketException.hpp"
 
 
 Socket::Socket(const std::string& ip, int port) : _fd(-1), _ip(ip), _port(port){
@@ -17,7 +17,6 @@ Socket::Socket(const std::string& ip, int port) : _fd(-1), _ip(ip), _port(port){
 }
 
 
-// PRIVATE - Disabled copy operations (no implementation needed, link error if used)
 Socket::Socket(const Socket& other) : _fd(-1) {
 	(void)other;
 }
@@ -35,11 +34,12 @@ Socket::~Socket(void) {
 }
 
 
-// PRIVATE STATIC - Helper functions
+// HELPER FUNCTIONS
 
 int	Socket::getPort(void) const {
 	return _port;
 }
+
 
 const std::string	Socket::getIp(void) const {
 	return _ip;
@@ -82,6 +82,7 @@ void	Socket::listenSocket(int socket_fd, int backlog) {
 
 
 // PUBLIC
+
 int Socket::getSocketFd(void) const {
 	return _fd;
 }

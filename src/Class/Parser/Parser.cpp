@@ -27,7 +27,6 @@ Parser::~Parser(void) {}
 
 // PRIVATE - REQUEST LINE VALIDATION
 
-
 void	Parser::validMethod(const std::string& method) {
 	if (method != "GET" && method != "POST" && method != "DELETE")
 		throw HttpCodeException(UNKNOWN_METHOD_ERROR, "Error: " + method + " is not a valid method");
@@ -55,7 +54,6 @@ void	Parser::validVersion(const std::string& version) {
 
 
 // PRIVATE - PARSING
-
 
 std::string	Parser::extractRoute(const std::string& full_route) {
 	size_t pos = full_route.find('?');
@@ -167,7 +165,6 @@ void	Parser::parseBody(const std::string& request, HttpRequest& http_struct, siz
 
 // PUBLIC
 
-
 HttpRequest Parser::parseHttpRequest(const std::string& request) {
 	HttpRequest http_struct;
 	size_t pos = 0;
@@ -180,8 +177,7 @@ HttpRequest Parser::parseHttpRequest(const std::string& request) {
 }
 
 
-// ANOTHER FUNCTIONS
-
+// HELPER FUNCTIONS
 
 const std::string	get_mime_type(const std::string& extension) {
 	if (extension == ".html") return "text/html";
@@ -193,6 +189,7 @@ const std::string	get_mime_type(const std::string& extension) {
 
 	return "text/html";
 }
+
 
 size_t	Parser::hexToDecimal(const std::string& hex) {
 	size_t hex_translated;
@@ -213,7 +210,6 @@ void Parser::parseChunkedBody(HttpRequest& http_struct, const std::string& reque
         size_t endl = request.find("\r\n", pos);
 
         if (endl == std::string::npos)
-			// Chunk size hasn't been fully received  yet
             throw PendingRequestException("Info: waiting for complete chunk size line");
 
         std::string size_hex = request.substr(pos, endl - pos);
@@ -221,7 +217,6 @@ void Parser::parseChunkedBody(HttpRequest& http_struct, const std::string& reque
 
         if (chunk_size == 0) {
             if (request.find("\r\n", endl + 2) == std::string::npos)
-				// Last chunk is incomplete (not \r\n)
                 throw PendingRequestException("Info: waiting for chunk terminator after final chunk");
             pos = endl + 4;
             break;
@@ -240,4 +235,3 @@ void Parser::parseChunkedBody(HttpRequest& http_struct, const std::string& reque
 
     http_struct.body = body;
 }
-

@@ -3,21 +3,18 @@
 #include <string>
 #include <map>
 
+
 /**
  * @struct HttpRequest
  * @brief Holds parsed components of an HTTP request.
  */
 struct HttpRequest {
-	// START_LINE, EXAMPLE: GET /index.html HTTP/1.1
 	std::string method;
-	std::string route; 		// e.g	/script.php
-	std::string	query;		// e.g	user=antonimo&id=42
 	std::string version;
+	std::string route;
+	std::string	query;
 
-	// HEADERS
-	std::map<std::string, std::string> headers; // e.g headers["Content-Length"] = "500";
-
-	// BODY (Content to POST (images, text...))
+	std::map<std::string, std::string> headers;
 	std::string body;
 };
 
@@ -29,7 +26,6 @@ class Parser {
 		Parser& operator=(const Parser&);
 		~Parser(void);
 
-		// Request Line validation
 		/**
 		 * @brief Validates if the HTTP method is GET, POST, or DELETE.
 		 * 

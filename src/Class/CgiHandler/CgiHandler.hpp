@@ -5,6 +5,7 @@
 
 #include "Parser.hpp"
 
+
 // CGI -> Common Gateway Interface
 
 class CgiHandler {

@@ -66,6 +66,7 @@ void Pipe::fdRedirection(int src, PipeMode mode) {
 	closeReadPipe();
 }
 
+
 int Pipe::fdRelease(PipeMode mode) {
 	int	out = -1;
 

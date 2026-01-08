@@ -178,21 +178,6 @@ YES → Does index.html exist?
     ↓
 NO  → Serve file directly
 
-
-## 🚦 Priorities (Roadmap)
-
-| Task                | Priority  | Status        |
-|--------------------:|:---------:|:------------:|
-| index               | 🔥 HIGH   | ✅ Completed  |
-| client_max_body_size| 🔥 HIGH   | ✅ Completed  |
-| error_pages         | 🟡 MEDIUM | ❌ Next       |
-| autoindex           | 🟡 MEDIUM | ❌ Later      |
-| redirect            | 🟡 MEDIUM | ❌ Later      |
-| upload_path         | 🟢 LOW    | ❌ Later      |
-| cgi_extension       | 🟢 LOW    | ❌ Last       |
-
----
-
 ### 🎯 **Action Plan**
 
 1. **Routing**  

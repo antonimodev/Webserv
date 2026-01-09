@@ -224,17 +224,3 @@ git push                         # Push merged changes
 ```
 
 ---
-
-# Todos
-
-- If location inside server Location is an image instead html, shows strange symbols
-
-- If location does not exist, throws 404 not found, but... is early throw?
-
-- Location->root (?)
-
-- load_resource() -> Index_file (?)
-
-- Check possible redundancies in HttpCodeException for every error code (404, 500, ...)
-
-- May implement a "volatile bool" variable to replace while(true)

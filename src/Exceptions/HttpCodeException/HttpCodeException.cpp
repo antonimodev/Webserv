@@ -10,7 +10,9 @@ HttpCodeException::HttpCodeException(HttpStatus code, const std::string& log_msg
 	: std::runtime_error(log_msg), _status(code) {}
 
 
-// PRIVATE
+/*****************************************************************************
+*                                  PRIVATE                                   *
+*****************************************************************************/
 
 const char* HttpCodeException::statusToString(HttpStatus status) const {
 	switch (status) {
@@ -47,7 +49,9 @@ static std::string getDefaultErrorHtml(const char* status) {
 }
 
 
-// PUBLIC
+/*****************************************************************************
+*                                  PUBLIC                                    *
+*****************************************************************************/
 
 std::string HttpCodeException::httpResponse(const ServerConfig* config) const {
     const char* status = statusToString(_status);

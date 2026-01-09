@@ -96,7 +96,9 @@ std::string	get_extension(const std::string& route) {
 }
 
 
-// --- Resource management ---
+/*****************************************************************************
+*                           RESOURCE MANAGEMENT                              *
+*****************************************************************************/
 
 std::string	load_resource(const std::string& full_path, const std::string& route, bool autoindex, const std::string& index_file) {
 	struct stat info;
@@ -179,7 +181,9 @@ std::string	save_resource(const std::string& full_path, const std::string& body)
 }
 
 
-// --- UTILITIES ---
+/*****************************************************************************
+*                             UTILITIES                                      *
+*****************************************************************************/
 
 std::string trim_space(const std::string& text) {
 	size_t start = text.find_first_not_of(' ');

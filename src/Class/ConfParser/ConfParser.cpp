@@ -67,7 +67,9 @@ void	ConfParser::initHandlers(void) {
 }
 
 
-// CONSTRUCTORS
+/*****************************************************************************
+*                                CONSTRUCTOR                                 *
+*****************************************************************************/
 
 ConfParser::ConfParser(void) {
 	initHandlers();
@@ -103,7 +105,9 @@ ConfParser& ConfParser::operator=(const ConfParser& other) {
 ConfParser::~ConfParser(void) {}
 
 
-// FUNCTIONS
+/*****************************************************************************
+*                                 FUNCTIONS                                  *
+*****************************************************************************/
 
 std::vector<std::string> ConfParser::tokenizeContent(const std::string& buffer) {
 	std::stringstream ss(buffer);

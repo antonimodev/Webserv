@@ -26,7 +26,7 @@ struct ClientState {
 	pid_t           _cgi_pid;
 	int             _cgi_pipe_fd;
 
-	ClientState();  // ← Añadir esta declaración
+	ClientState();  // ← Añadir esta declaración REVISAR
 };
 
 

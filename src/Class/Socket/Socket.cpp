@@ -34,7 +34,9 @@ Socket::~Socket(void) {
 }
 
 
-// HELPER FUNCTIONS
+/*****************************************************************************
+*                            HELPER FUNCTIONS                                *
+*****************************************************************************/
 
 int	Socket::getPort(void) const {
 	return _port;
@@ -81,7 +83,9 @@ void	Socket::listenSocket(int socket_fd, int backlog) {
 }
 
 
-// PUBLIC
+/*****************************************************************************
+*                                  PUBLIC                                    *
+*****************************************************************************/
 
 int Socket::getSocketFd(void) const {
 	return _fd;

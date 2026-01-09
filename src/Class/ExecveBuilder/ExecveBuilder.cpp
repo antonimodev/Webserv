@@ -6,7 +6,9 @@
 #include "ExecveBuilder.hpp"
 
 
-// CONSTRUCTORS
+/*****************************************************************************
+*                                CONSTRUCTOR                                 *
+*****************************************************************************/
 
 ExecveBuilder::ExecveBuilder(const std::map<std::string, std::string> env_map) {
 	_matrix = new char*[env_map.size() + 1];
@@ -45,7 +47,9 @@ ExecveBuilder::~ExecveBuilder(void) {
 }
 
 
-// PUBLIC METHODS
+/*****************************************************************************
+*                             PUBLIC METHODS                                 *
+*****************************************************************************/
 
 char** ExecveBuilder::get(void) const {
 	return _matrix;

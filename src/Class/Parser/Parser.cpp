@@ -25,7 +25,9 @@ Parser& Parser::operator=(const Parser& other) {
 Parser::~Parser(void) {}
 
 
-// PRIVATE - REQUEST LINE VALIDATION
+/*****************************************************************************
+*                     PRIVATE - REQUEST LINE VALIDATION                      *
+*****************************************************************************/
 
 void	Parser::validMethod(const std::string& method) {
 	if (method != "GET" && method != "POST" && method != "DELETE")
@@ -53,7 +55,9 @@ void	Parser::validVersion(const std::string& version) {
 }
 
 
-// PRIVATE - PARSING
+/*****************************************************************************
+*                           PRIVATE - PARSING                                *
+*****************************************************************************/
 
 std::string	Parser::extractRoute(const std::string& full_route) {
 	size_t pos = full_route.find('?');
@@ -163,7 +167,9 @@ void	Parser::parseBody(const std::string& request, HttpRequest& http_struct, siz
 }
 
 
-// PUBLIC
+/*****************************************************************************
+*                               PUBLIC                                       *
+*****************************************************************************/
 
 HttpRequest Parser::parseHttpRequest(const std::string& request) {
 	HttpRequest http_struct;
@@ -177,7 +183,9 @@ HttpRequest Parser::parseHttpRequest(const std::string& request) {
 }
 
 
-// HELPER FUNCTIONS
+/*****************************************************************************
+*                            HELPER FUNCTIONS                                *
+*****************************************************************************/
 
 const std::string	get_mime_type(const std::string& extension) {
 	if (extension == ".html") return "text/html";

@@ -41,9 +41,9 @@ struct ServerConfig {
 };
 
 
-// ═════════════════════════════════════════════════════════
-// HELPER FUNCTIONS (handlers doesn't need object state)
-// ═════════════════════════════════════════════════════════
+/*****************************************************************************
+*        HELPER FUNCTIONS (handlers doesn't need object state)               *
+*****************************************************************************/
 
 // Server handlers
 void	handleServerName(const std::string& value, ServerConfig& config);
@@ -64,7 +64,7 @@ void	handleCgiExtension(const std::string& value, LocationConfig& location);
 void	handleReturn(const std::string& value, LocationConfig& location);
 
 
-/** ════════════════════════════════════════════════════════════════════
+/**
  * @brief Parser for NGINX-style configuration files
  */
 

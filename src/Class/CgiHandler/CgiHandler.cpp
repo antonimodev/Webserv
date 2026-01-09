@@ -47,7 +47,9 @@ CgiHandler& CgiHandler::operator=(const CgiHandler& other) {
 CgiHandler::~CgiHandler(void) {}
 
 
-// PRIVATE
+/*****************************************************************************
+*                                  PRIVATE                                   *
+*****************************************************************************/
 
 std::string CgiHandler::getHeader(const HttpRequest& request, const std::string& key) {
 	std::map<std::string, std::string>::const_iterator it = request.headers.find(key);
@@ -76,7 +78,9 @@ void	CgiHandler::setScriptInfo(const std::string& route, const std::string& full
 }
 
 
-// PUBLIC
+/*****************************************************************************
+*                                  PUBLIC                                    *
+*****************************************************************************/
 
 std::string CgiHandler::process_response(const std::string& content) {
 	size_t	header_end = content.find("\r\n\r\n");

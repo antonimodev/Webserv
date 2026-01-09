@@ -324,6 +324,13 @@ static std::string handleStaticRequest(const HttpRequest& request, LocationConfi
 		}
 		else
 			throw HttpCodeException(FORBIDDEN, "Error: Upload not allowed (no upload_path)");
+	} else if (method == "OPTIONS") {
+		return "HTTP/1.1 204 No Content\r\n"
+				"Access-Control-Allow-Origin: *\r\n"
+				"Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS\r\n"
+				"Access-Control-Allow-Headers: Content-Type\r\n"
+				"Content-Length: 0\r\n"
+				"\r\n";
 	}
 	else
 		return delete_resource(full_path);

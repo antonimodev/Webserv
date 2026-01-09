@@ -1,144 +1,141 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Webserv - 42</title>
-    <link rel="stylesheet" href="/styles.css">
-    <link rel="icon" type="image/x-icon" href="/favicon.png">
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Webserv 42</title>
+	<link rel="stylesheet" href="/styles.css">
+	<link rel="icon" type="image/x-icon" href="/favicon.png">
 </head>
 <body>
-    <i><small>Welcome to our</small></i>
-    <h1>WebServer</h1>
 
-    <div class="button-container">
-        <div class="action-section">
-            <h2>📍 Server Tests</h2>
-            <div class="btn-group">
-                <a href="/google" class="btn btn-primary">Google Redirect (301)</a>
-                <a href="/styles.css" class="btn btn-secondary">View Stylesheet</a>
-                <a href="/ErrorPages/404.html" class="btn btn-error">Custom 404 Page</a>
-            </div>
-        </div>
+	<div style="text-align: center;">
+		<i><small>Welcome to</small></i>
+		<h1>WebServer 42</h1>
+	</div>
 
-        <div class="action-section">
-            <h2>🐘 CGI Tests (Port 8081)</h2>
-            <div class="btn-group">
-                <a href="http://localhost:8081/cgi-bin/test.php" target="_blank" class="btn btn-cgi">PHP Script</a>
-                <a href="http://localhost:8081/python/test.py" target="_blank" class="btn btn-cgi">Python Script</a>
-            </div>
-        </div>
+	<div class="dashboard-grid">
 
-        <div class="action-section">
-            <h2>�📤 Upload File (POST)</h2>
-            <form id="upload-form" onsubmit="uploadFile(event); return false;">
-                <input type="file" name="file" id="file-input" required>
-                <button type="submit" class="btn btn-post">Upload File</button>
-            </form>
-            <p id="upload-result"></p>
-        </div>
+		<div class="card">
+			<h2>📍 Main Server (8080)</h2>
+			<p>Basic browsing and errors.</p>
+			
+			<div class="btn-stack">
+				<a href="/google" class="btn btn-primary">Google Redirect (301)</a>
+				<a href="/ErrorPages/404.html" class="btn btn-danger">Test Error 404</a>
+				<a href="/styles.css" class="btn btn-gray">Watch CSS</a>
+			</div>
+		</div>
 
-        <div class="action-section">
-            <h2>🗑️ Delete File (DELETE)</h2>
-            <form id="delete-form" onsubmit="deleteFile(event); return false;">
-                <input type="text" id="filename" name="filename" placeholder="Enter filename (e.g., test.txt)" required>
-                <button type="submit" class="btn btn-delete">Delete File</button>
-            </form>
-            <p id="delete-result"></p>
-        </div>
+		<div class="card">
+			<h2>🐘 CGI Server (8081)</h2>
+			<p>Script execution.</p>
+			
+			<div class="btn-stack">
+				<a href="http://localhost:8081/cgi-bin/test.php" target="_blank" class="btn btn-cgi">PHP Info</a>
+				<a href="http://localhost:8081/python/test.py" target="_blank" class="btn btn-cgi">Python Script</a>
+			</div>
+		</div>
 
-        <div class="action-section">
-            <h2>📂 View Uploaded Files</h2>
-            <a href="/uploads/" class="btn btn-browse">Browse Uploads</a>
-        </div>
-    </div>
+		<div class="card">
+			<h2>📤 Uploads (8082)</h2>
+			<p>File uploading.</p>
+			
+			<form onsubmit="uploadRaw(); return false;">
+				<input type="file" id="fileInput">
+				<div class="btn-stack">
+					<button type="submit" class="btn btn-success">Upload file</button>
+					<a href="http://localhost:8082/uploads/" target="_blank" class="btn btn-gray">📂 Check files</a>
+				</div>
+			</form>
+			<div id="status-upload" class="status"></div>
+		</div>
 
-    <script>
-        function uploadFile(event) {
-            event.preventDefault();
-            
-            const fileInput = document.getElementById('file-input');
-            const resultElement = document.getElementById('upload-result');
-            
-            if (!fileInput.files || !fileInput.files.length) {
-                resultElement.textContent = '⚠️ Please select a file';
-                resultElement.className = 'warning';
-                return;
-            }
-        
-            const file = fileInput.files[0];
-            
-            fetch(`/uploads/${file.name}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': file.type || 'application/octet-stream'
-                },
-                body: file
-            })
-            .then(response => {
-                if (response.ok || response.status === 201) {
-                    resultElement.textContent = `✅ File "${file.name}" uploaded successfully!`;
-                    resultElement.className = 'success';
-                    fileInput.value = '';
-                } else {
-                    const errorMessage = getErrorMessage(response.status);
-                    resultElement.textContent = `❌ Upload failed: ${errorMessage}`;
-                    resultElement.className = 'error';
-                }
-            })
-            .catch(error => {
-                resultElement.textContent = `❌ Network error: ${error.message}`;
-                resultElement.className = 'error';
-            });
-        }
-        
-        function deleteFile(event) {
-            event.preventDefault();
-            
-            const filename = document.getElementById('filename').value.trim();
-            const resultElement = document.getElementById('delete-result');
-            
-            if (!filename) {
-                resultElement.textContent = '⚠️ Please enter a filename';
-                resultElement.className = 'warning';
-                return;
-            }
-        
-            fetch(`/uploads/${filename}`, {
-                method: 'DELETE'
-            })
-            .then(response => {
-                if (response.ok || response.status === 204) {
-                    resultElement.textContent = `✅ File "${filename}" deleted successfully!`;
-                    resultElement.className = 'success';
-                    document.getElementById('filename').value = '';
-                } else {
-                    const errorMessage = getErrorMessage(response.status);
-                    resultElement.textContent = `❌ Delete failed: ${errorMessage}`;
-                    resultElement.className = 'error';
-                }
-            })
-            .catch(error => {
-                resultElement.textContent = `❌ Network error: ${error.message}`;
-                resultElement.className = 'error';
-            });
-        }
-        
-        function getErrorMessage(statusCode) {
-            const errorMessages = {
-                400: '400 Bad Request',
-                403: '403 Forbidden',
-                404: '404 Not Found',
-                405: '405 Method Not Allowed',
-                413: '413 Payload Too Large',
-                500: '500 Internal Server Error',
-                501: '501 Not Implemented',
-                502: '502 Bad Gateway',
-                503: '503 Service Unavailable'
-            };
-            
-            return errorMessages[statusCode] || `${statusCode} Error`;
-        }
-    </script>
+		<div class="card">
+			<h2>🗑️ Delete (8082)</h2>
+			<p>File deleting.</p>
+			
+			<form onsubmit="deleteFile(); return false;">
+				<input type="text" id="deleteInput" placeholder="Filename (e.g: ApproveMyProject.png)">
+				<div class="btn-stack">
+					<button type="submit" class="btn btn-danger">Delete file</button>
+				</div>
+			</form>
+			<div id="status-delete" class="status"></div>
+		</div>
+
+	</div>
+
+	<script>
+		const UPLOAD_HOST = "http://localhost:8082";
+
+		async function uploadRaw() {
+			const input = document.getElementById('fileInput');
+			const status = document.getElementById('status-upload');
+			const file = input.files[0];
+
+			if (!file) { status.innerHTML = '⚠️ Choose file'; return; }
+
+			status.innerHTML = 'Sending...';
+
+			try {
+				const res = await fetch(`${UPLOAD_HOST}/uploads/${file.name}`, {
+					method: 'POST',
+					headers: { 'Content-Type': file.type || 'application/octet-stream' },
+					body: file
+				});
+				
+				if (res.ok || res.status === 201) {
+					status.innerHTML = '<span class="ok">✅ Uploaded successfully (201)</span>';
+					input.value = '';
+					autoClearStatus(status);
+				} else {
+					status.innerHTML = `<span class="fail">❌ Error ${res.status}</span>`;
+				}
+			} catch (e) {
+				status.innerHTML = '<span class="fail">❌ Network error</span>';
+			}
+		}
+
+		async function deleteFile() {
+			const input = document.getElementById('deleteInput');
+			const status = document.getElementById('status-delete');
+			const name = input.value.trim();
+
+			if (!name) { status.innerHTML = '⚠️ Type filename to delete'; return; }
+
+			status.innerHTML = 'Deleting...';
+			status.style.opacity = "1";
+
+			try {
+				const res = await fetch(`${UPLOAD_HOST}/uploads/${name}`, { method: 'DELETE' });
+
+				if (res.ok || res.status === 204) {
+					status.innerHTML = '<span class="ok">✅ Deleted (204)</span>';
+					input.value = '';
+					autoClearStatus(status);
+				} else {
+					status.innerHTML = `<span class="fail">❌ Error ${res.status}</span>`;
+				}
+			} catch (e) {
+				status.innerHTML = '<span class="fail">❌ Network Error</span>';
+			}
+		}
+		function autoClearStatus(element) {
+			setTimeout(() => {
+				element.style.transition = "opacity 0.5s ease";
+				element.style.opacity = "0";
+
+				setTimeout(() => {
+					element.innerHTML = "";
+					element.style.opacity = "1";
+					element.style.transition = "none";
+				}, 500);
+			}, 3000);
+		}
+	</script>
+	<footer>
+		<small><i><strong>By: antonimo, frmarian & jortiz-m</strong></i></small>
+	</footer>
 </body>
 </html>

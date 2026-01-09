@@ -30,7 +30,7 @@ Parser::~Parser(void) {}
 *****************************************************************************/
 
 void	Parser::validMethod(const std::string& method) {
-	if (method != "GET" && method != "POST" && method != "DELETE")
+	if (method != "GET" && method != "POST" && method != "DELETE" && method != "OPTIONS")
 		throw HttpCodeException(UNKNOWN_METHOD_ERROR, "Error: " + method + " is not a valid method");
 }
 

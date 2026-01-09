@@ -9,8 +9,8 @@
 #include <sys/stat.h>
 #include <cerrno>
 
-#include "DirectoryHandle.hpp"
 #include "webserv.h"
+#include "DirectoryHandle.hpp"
 
 #include "HttpCodeException.hpp"
 
@@ -66,18 +66,16 @@ std::string	get_fd_content(int fd) {
 
 
 ssize_t	readFd(int fd, std::string& buffer, FdType type) {
-	char temp[4096];
+	char	temp[4096];
 	ssize_t bytes_read = -1;
 
 	if (type == SOCKET)
-		bytes_read = recv(fd, temp, sizeof(temp) - 1, 0);
+		bytes_read = recv(fd, temp, sizeof(temp), 0);
 	else
-		bytes_read = read(fd, temp, sizeof(temp) - 1);
+		bytes_read = read(fd, temp, sizeof(temp));
 
-	if (bytes_read > 0) {
-		temp[bytes_read] = '\0';
-		buffer.append(temp);
-	}
+	if (bytes_read > 0)
+		buffer.append(temp, bytes_read);
 
 	return bytes_read;
 }
@@ -158,8 +156,9 @@ std::string	delete_resource(const std::string& path) {
 		throw HttpCodeException(INTERNAL_ERROR, "Error: failed to delete file " + path);
 
 	return "HTTP/1.1 204 No Content\r\n"
-			"Content-Length: 0 \r\n"
-			"\r\n";
+		"Access-Control-Allow-Origin: *\r\n"
+		"Content-Length: 0 \r\n"
+		"\r\n";
 }
 
 
@@ -175,6 +174,7 @@ std::string	save_resource(const std::string& full_path, const std::string& body)
 		throw HttpCodeException(INTERNAL_ERROR, "Error: failed to write file content");
 
 	return "HTTP/1.1 201 Created\r\n"
+		"Access-Control-Allow-Origin: *\r\n"
 		"Content-Length: 0 \r\n"
 		"\r\n";
 }

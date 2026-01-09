@@ -11,7 +11,7 @@ struct AllowedMethods {
 		return	method == "GET"
 			||	method == "POST"
 			||	method == "DELETE"
-			||	method == "PUT";
+			||	method == "OPTIONS";
 	}
 };
 

@@ -31,7 +31,7 @@ LocationConfig::LocationConfig(void)
 		root(""),
 		upload_path(""),
 		autoindex(false),
-		cgi_extension(std::make_pair("", "")),
+		cgi_extensions(),
 		redirect(std::make_pair(0, ""))
 {}
 
@@ -43,13 +43,13 @@ LocationConfig::LocationConfig(std::string path)
 		root(""),
 		upload_path(""),
 		autoindex(false),
-		cgi_extension(std::make_pair("", "")),
+		cgi_extensions(),
 		redirect(std::make_pair(0, ""))
 {}
 
 
 void	ConfParser::initHandlers(void) {
-	_serverHandlers["server_name"] = &handleServerName;
+	_serverHandlers["server_name"] = & handleServerName;
 	_serverHandlers["listen"] = &handleListen;
 	_serverHandlers["host"] = &handleHost;
 	_serverHandlers["root"] = &handleRoot;

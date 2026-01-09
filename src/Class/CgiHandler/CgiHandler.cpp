@@ -14,22 +14,22 @@
 #include "HttpCodeException.hpp"
 
 
-CgiHandler::CgiHandler(const HttpRequest& request, const std::string& full_path, std::pair<std::string, std::string> cgi_extension) {
+CgiHandler::CgiHandler(const HttpRequest& request, const std::string& full_path, const std::map<std::string, std::string>& cgi_extension) {
 	_body = request.body;
 
-    _env["REQUEST_METHOD"] = request.method;
-    _env["QUERY_STRING"] = request.query;
+	_env["REQUEST_METHOD"] = request.method;
+	_env["QUERY_STRING"] = request.query;
 
-    _env["PATH_INFO"] = "";
-    _env["SCRIPT_FILENAME"] = full_path;
-    setScriptInfo(request.route, full_path, cgi_extension.first);
+	_env["PATH_INFO"] = "";
+	_env["SCRIPT_FILENAME"] = full_path;
+	setScriptInfo(request.route, full_path, cgi_extension);
 
-    _env["CONTENT_LENGTH"] = getHeader(request, "Content-Length");
-    _env["CONTENT_TYPE"] = getHeader(request, "Content-Type");
+	_env["CONTENT_LENGTH"] = getHeader(request, "Content-Length");
+	_env["CONTENT_TYPE"] = getHeader(request, "Content-Type");
 
-    _env["GATEWAY_INTERFACE"] = "CGI/1.1";
-    _env["SERVER_PROTOCOL"] = "HTTP/1.1";
-    _env["REDIRECT_STATUS"] = "200";
+	_env["GATEWAY_INTERFACE"] = "CGI/1.1";
+	_env["SERVER_PROTOCOL"] = "HTTP/1.1";
+	_env["REDIRECT_STATUS"] = "200";
 }
 
 
@@ -61,20 +61,24 @@ std::string CgiHandler::getHeader(const HttpRequest& request, const std::string&
 }
 
 
-void	CgiHandler::setScriptInfo(const std::string& route, const std::string& full_path, const std::string& cgi_ext) {
-    size_t pos = route.find(cgi_ext);
-    
-    if (pos != std::string::npos) {
-        size_t end_of_script = pos + cgi_ext.size();
+void CgiHandler::setScriptInfo(const std::string& route, const std::string& full_path, const std::map<std::string, std::string>& cgi_ext) {
+	std::map<std::string, std::string>::const_iterator it = cgi_ext.begin();
 
-        _env["PATH_INFO"] = route.substr(end_of_script);
+	for (; it != cgi_ext.end(); ++it) {
+		size_t pos = route.find(it->first);
+		_cgi_route = it->second;
 
-        size_t path_info_len = _env["PATH_INFO"].size();
+		if (pos != std::string::npos) {
+			size_t end_of_script = pos + it->first.size();
+			_env["PATH_INFO"] = route.substr(end_of_script);
+			size_t path_info_len = _env["PATH_INFO"].size();
 
-        if (full_path.size() >= path_info_len) {
-            _env["SCRIPT_FILENAME"] = full_path.substr(0, full_path.size() - path_info_len);
-        }
-    }
+			if (full_path.size() >= path_info_len)
+				_env["SCRIPT_FILENAME"] = full_path.substr(0, full_path.size() - path_info_len);
+
+			break;
+		}
+	}
 }
 
 
@@ -107,43 +111,44 @@ std::string CgiHandler::process_response(const std::string& content) {
 }
 
 
-int CgiHandler::executeCgi(pid_t& pid, std::pair<std::string, std::string>& cgi_extension) {
-    std::vector<std::string> args;
+int CgiHandler::executeCgi(pid_t& pid) {
 
-    args.push_back(cgi_extension.second);
-    args.push_back(_env["SCRIPT_FILENAME"]);
+	std::vector<std::string> args;
 
-    ExecveBuilder env_builder(_env);
-    ExecveBuilder arg_builder(args);
+	args.push_back(_cgi_route);
+	args.push_back(_env["SCRIPT_FILENAME"]);
 
-    try {
-        Pipe output_pipe;		// from child (script output) to parent
-        Pipe input_pipe;		// from parent (script input) to child
+	ExecveBuilder env_builder(_env);
+	ExecveBuilder arg_builder(args);
 
-        pid_t child = fork();
-        pid = child;
+	try {
+		Pipe output_pipe;		// from child (script output) to parent
+		Pipe input_pipe;		// from parent (script input) to child
 
-        if (child == 0) {
-            output_pipe.fdRedirection(STDOUT_FILENO, Pipe::WRITE);
-            input_pipe.fdRedirection(STDIN_FILENO, Pipe::READ);
+		pid_t child = fork();
+		pid = child;
 
-            execve(args[0].c_str(), arg_builder.get(), env_builder.get());
-            throw CgiException("Error: execve failed");
-        }
+		if (child == 0) {
+			output_pipe.fdRedirection(STDOUT_FILENO, Pipe::WRITE);
+			input_pipe.fdRedirection(STDIN_FILENO, Pipe::READ);
 
-        output_pipe.closeWritePipe();
-        input_pipe.closeReadPipe();
+			execve(args[0].c_str(), arg_builder.get(), env_builder.get());
+			throw CgiException("Error: execve failed");
+		}
 
-        if (!_body.empty()) {
-            write(input_pipe.getWritePipe(), _body.c_str(), _body.size());
-        }
+		output_pipe.closeWritePipe();
+		input_pipe.closeReadPipe();
 
-        input_pipe.closeWritePipe();
+		if (!_body.empty()) {
+			write(input_pipe.getWritePipe(), _body.c_str(), _body.size());
+		}
 
-        return output_pipe.fdRelease(Pipe::READ);
+		input_pipe.closeWritePipe();
 
-    } catch (const PipeException& e) {
-        std::cerr << e.what() << std::endl;
-        return -1;
-    }
+		return output_pipe.fdRelease(Pipe::READ);
+
+	} catch (const PipeException& e) {
+		std::cerr << e.what() << std::endl;
+		return -1;
+	}
 }

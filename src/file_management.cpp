@@ -174,7 +174,6 @@ std::string	save_resource(const std::string& full_path, const std::string& body)
 	if (file.fail())
 		throw HttpCodeException(INTERNAL_ERROR, "Error: failed to write file content");
 
-	// HARDCODED CONTENT-LEGTH (REVISAR)
 	return "HTTP/1.1 201 Created\r\n"
 		"Content-Length: 0 \r\n"
 		"\r\n";

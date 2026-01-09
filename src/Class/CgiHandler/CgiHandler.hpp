@@ -12,6 +12,7 @@ class CgiHandler {
 	private:
 		std::map<std::string, std::string>  _env;
         std::string                         _body;
+		std::string							_cgi_route;
 
 		CgiHandler(const CgiHandler&);
 		CgiHandler& operator=(const CgiHandler&);
@@ -32,27 +33,27 @@ class CgiHandler {
 		 * @brief Sets the script information for a CGI request.
 		 * 
 		 * This function configures the script-related information, including the route,
-		 * full path, and CGI extension, for processing a CGI request.
+		 * full path, and CGI extensions map, for processing a CGI request.
 		 * 
 		 * @param route The route of the CGI script.
 		 * @param full_path The full path to the CGI script.
-		 * @param cgi_ext The CGI extension of the script.
+		 * @param cgi_ext Map of CGI extensions and their interpreter paths.
 		 */
-		void        setScriptInfo(const std::string& route, const std::string& full_path, const std::string& cgi_ext);
+		void setScriptInfo(const std::string& route, const std::string& full_path, const std::map<std::string, std::string>& cgi_ext);
 
 	public:
 		/**
 		 * @brief Constructs a new CgiHandler object and sets up CGI environment variables.
 		 * 
 		 * This constructor initializes the CGI handler with the given HTTP request,
-		 * full path to the script, and CGI extension. It also sets up the necessary
+		 * full path to the script, and CGI extension map. It also sets up the necessary
 		 * environment variables for the CGI process.
 		 * 
 		 * @param request The HTTP request object.
 		 * @param full_path The full path to the CGI script.
-		 * @param cgi_extension A pair containing the CGI extension and its interpreter path.
+		 * @param cgi_extension Map of CGI extensions and their interpreter paths.
 		 */
-		CgiHandler(const HttpRequest& request, const std::string& full_path, std::pair<std::string, std::string> cgi_extension);
+		CgiHandler(const HttpRequest& request, const std::string& full_path, const std::map<std::string, std::string>& cgi_extension);
 		~CgiHandler(void);
 
 		/**
@@ -66,7 +67,7 @@ class CgiHandler {
 		* @param cgi_extension Pair containing the CGI extension and its interpreter path.
 		* @return int File descriptor for reading the CGI output, or -1 on error.
 		*/
-		int executeCgi(pid_t& pid, std::pair<std::string, std::string>& cgi_extension);
+		int executeCgi(pid_t& pid);
 
 		/**
 		 * @brief Processes the CGI response content.

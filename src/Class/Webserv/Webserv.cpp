@@ -133,12 +133,19 @@ bool	Webserv::isServerSocket(int fd) const {
 	return false;
 }
 
-
-bool	Webserv::isCgiRequest(const std::string& full_path, const std::pair<std::string, std::string>& cgi_extension) {
-	if (cgi_extension.first.empty())
-		return false;
+bool	Webserv::isCgiRequest(const std::string& full_path, const std::map<std::string, std::string>& cgi_extension) {
 	std::string extension = get_extension(full_path);
-	return (extension == cgi_extension.first);
+	std::map<std::string, std::string>::const_iterator it = cgi_extension.begin();
+
+	for (; it != cgi_extension.end(); ++it) {
+		if (it->first.empty())
+			return false;
+
+		if (it->first == extension)
+			return true;
+	}
+
+	return false;
 }
 
 
@@ -410,9 +417,9 @@ void	Webserv::processClientRequest(size_t& idx) {
 
 		std::string full_path = buildFullPath(request.route, location, client._server_config);
 
-		if (isCgiRequest(full_path, location->cgi_extension)) {
-			CgiHandler cgi(request, full_path, location->cgi_extension);
-			int pipe_fd = cgi.executeCgi(client._cgi_pid, location->cgi_extension);
+		if (isCgiRequest(full_path, location->cgi_extensions)) {
+			CgiHandler cgi(request, full_path, location->cgi_extensions);
+			int pipe_fd = cgi.executeCgi(client._cgi_pid);
 
 			client._cgi_pipe_fd = pipe_fd;
 
@@ -586,4 +593,4 @@ void	Webserv::runServer(void) {
 				handleSendEvent(i);
 		}
 	}
-}
+} 

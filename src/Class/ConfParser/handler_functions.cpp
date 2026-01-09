@@ -143,7 +143,7 @@ void	handleCgiExtension(const std::string& value, LocationConfig& location) {
 	if (!(iss >> extension >> path))
 		throw ParseException("Invalid cgi_extension format: " + value);
 
-	location.cgi_extension = std::make_pair(extension, path);
+	location.cgi_extensions[extension] = path;
 }
 
 

@@ -17,7 +17,7 @@ struct LocationConfig {
 	std::string                     	root;
 	std::string                     	upload_path;
 	bool                            	autoindex;
-	std::pair<std::string, std::string> cgi_extension;
+	std::map<std::string, std::string>	cgi_extensions;
 	std::pair<int, std::string>			redirect;
 	
 	LocationConfig(void);

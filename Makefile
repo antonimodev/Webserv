@@ -61,15 +61,12 @@ help:
 	@echo "$(COLORS)clean:$(RESET) Deletes object files."
 	@echo "$(COLORS)fclean:$(RESET) Deletes object files and executable."
 	@echo "$(COLORS)re:$(RESET) Recompiles the program from scratch."
+	@echo "$(COLORS)t:$(RESET) Recompiles the program with test.conf as argument by default."
 
 -include $(DEPENDENCIES)
 
 t: re
 	@clear
 	@./webserv ./conf/test.conf || 2>/dev/null
-
-t2: re
-	@clear
-	@valgrind ./webserv ./conf/test.conf || 2>/dev/null
 
 .PHONY: all clean fclean re

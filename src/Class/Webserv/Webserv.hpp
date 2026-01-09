@@ -26,7 +26,7 @@ struct ClientState {
 	pid_t           _cgi_pid;
 	int             _cgi_pipe_fd;
 
-	ClientState();  // ← Añadir esta declaración REVISAR
+	ClientState();
 };
 
 
@@ -157,7 +157,7 @@ class Webserv {
 		 * @return true if the request matches the CGI extension.
 		 * @return false otherwise.
 		 */
-		bool		isCgiRequest(const std::string& full_path, const std::pair<std::string, std::string>& cgi_extension);
+		bool		isCgiRequest(const std::string& full_path, const std::map<std::string, std::string>& cgi_extension);
 
 		/**
 		 * @brief Cleans up resources associated with a CGI process for a client.

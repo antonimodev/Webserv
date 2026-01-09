@@ -1,5 +1,5 @@
 <?php
-echo "Content-Type: text/plain\r\n\r\n";
+header("Content-Type: text/plain");
 
 echo "--- PHP CGI INPUT TEST ---\n";
 

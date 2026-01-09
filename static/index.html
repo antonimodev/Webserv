@@ -4,11 +4,124 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Webserv - 42</title>
-	<link rel="stylesheet" href="styles.css">
-	<link rel="icon" type="image/x-icon" href="favicon.png">
+	<link rel="stylesheet" href="/styles.css">
+	<link rel="icon" type="image/x-icon" href="/favicon.png">
 </head>
 <body>
 	<i><small>Welcome to our</small></i>
 	<h1>WebServer</h1>
+
+	<div class="button-container">
+		<div class="action-section">
+			<h2>📤 Upload File (POST)</h2>
+			<form id="upload-form" onsubmit="uploadFile(event); return false;">
+				<input type="file" name="file" id="file-input" required>
+				<button type="submit" class="btn btn-post">Upload File</button>
+			</form>
+			<p id="upload-result"></p>
+		</div>
+
+		<div class="action-section">
+			<h2>🗑️ Delete File (DELETE)</h2>
+			<form id="delete-form" onsubmit="deleteFile(event); return false;">
+				<input type="text" id="filename" name="filename" placeholder="Enter filename (e.g., test.txt)" required>
+				<button type="submit" class="btn btn-delete">Delete File</button>
+			</form>
+			<p id="delete-result"></p>
+		</div>
+
+		<div class="action-section">
+			<h2>📂 View Uploaded Files</h2>
+			<a href="/Uploads/" class="btn btn-browse">Browse Uploads</a>
+		</div>
+	</div>
+
+	<script>
+				function uploadFile(event) {
+			event.preventDefault();
+			
+			const fileInput = document.getElementById('file-input');
+			const resultElement = document.getElementById('upload-result');
+			
+			if (!fileInput.files || !fileInput.files.length) {
+				resultElement.textContent = '⚠️ Please select a file';
+				resultElement.className = 'warning';
+				return;
+			}
+		
+			const file = fileInput.files[0];
+			
+			fetch(`/Uploads/${file.name}`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': file.type || 'application/octet-stream'
+				},
+				body: file
+			})
+			.then(response => {
+				if (response.ok || response.status === 201) {
+					resultElement.textContent = `✅ File "${file.name}" uploaded successfully!`;
+					resultElement.className = 'success';
+					fileInput.value = '';
+				} else {
+					const errorMessage = getErrorMessage(response.status);
+					resultElement.textContent = `❌ Upload failed: ${errorMessage}`;
+					resultElement.className = 'error';
+				}
+			})
+			.catch(error => {
+				resultElement.textContent = `❌ Network error: ${error.message}`;
+				resultElement.className = 'error';
+			});
+		}
+		
+		function deleteFile(event) {
+			event.preventDefault();
+			
+			const filename = document.getElementById('filename').value.trim();
+			const resultElement = document.getElementById('delete-result');
+			
+			if (!filename) {
+				resultElement.textContent = '⚠️ Please enter a filename';
+				resultElement.className = 'warning';
+				return;
+			}
+		
+			fetch(`/Uploads/${filename}`, {
+				method: 'DELETE'
+			})
+			.then(response => {
+				if (response.ok || response.status === 204) {
+					resultElement.textContent = `✅ File "${filename}" deleted successfully!`;
+					resultElement.className = 'success';
+					document.getElementById('filename').value = '';
+				} else {
+					const errorMessage = getErrorMessage(response.status);
+					resultElement.textContent = `❌ Delete failed: ${errorMessage}`;
+					resultElement.className = 'error';
+				}
+			})
+			.catch(error => {
+				resultElement.textContent = `❌ Network error: ${error.message}`;
+				resultElement.className = 'error';
+			});
+		}
+		
+		function getErrorMessage(statusCode) {
+			const errorMessages = {
+				400: '400 Bad Request - Invalid request',
+				403: '403 Forbidden - Access denied',
+				404: '404 Not Found - Resource not found',
+				405: '405 Method Not Allowed - Method not supported',
+				413: '413 Payload Too Large - File too big',
+				500: '500 Internal Server Error - Server error',
+				501: '501 Not Implemented - Feature not supported',
+				502: '502 Bad Gateway - Gateway error',
+				503: '503 Service Unavailable - Service unavailable'
+			};
+			
+			return errorMessages[statusCode] || `${statusCode} Error`;
+		}
+	</script>
 </body>
 </html>
